@@ -1,0 +1,8 @@
+[metrics]
+default_thresholds = { demographic_parity_difference = 0.10, equalized_odds_difference = 0.10, disparate_impact_ratio = 0.80 }
+
+[attributes]
+protected = ["gender", "race", "age"]
+
+[report]
+format = "pdf"
