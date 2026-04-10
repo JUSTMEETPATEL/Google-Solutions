@@ -10,7 +10,10 @@ requires-python = ">=3.11"
 dependencies = [
     "aif360>=0.6.1",
     "fairlearn>=0.13.0",
+    "joblib>=1.4.0",
+    "onnxruntime>=1.18.0",
     "pandas>=3.0.2",
+    "pyarrow>=15.0.0",
     "scikit-learn>=1.8.0",
 ]
 
@@ -21,4 +24,5 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "pytest>=9.0.3",
+    "pytest-mock>=3.14.0",
 ]
