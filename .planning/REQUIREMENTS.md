@@ -9,9 +9,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Engine Foundation
 
-- [ ] **ENG-01**: Engine scaffold with Python 3.11+ project structure, dependency management (pyproject.toml), and test infrastructure
-- [ ] **ENG-02**: Abstract wrapper layer around AIF360 and Fairlearn that isolates upstream API changes
-- [ ] **ENG-03**: Configuration system for metric thresholds, protected attributes, and report preferences (.faircheckrc)
+- [x] **ENG-01**: Engine scaffold with Python 3.11+ project structure, dependency management (pyproject.toml), and test infrastructure
+- [x] **ENG-02**: Abstract wrapper layer around AIF360 and Fairlearn that isolates upstream API changes
+- [x] **ENG-03**: Configuration system for metric thresholds, protected attributes, and report preferences (.faircheckrc)
 
 ### Model Ingestion
 
@@ -171,9 +171,9 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ENG-01 | Phase 1 | Pending |
-| ENG-02 | Phase 1 | Pending |
-| ENG-03 | Phase 1 | Pending |
+| ENG-01 | Phase 1 | Complete |
+| ENG-02 | Phase 1 | Complete |
+| ENG-03 | Phase 1 | Complete |
 | ING-01 | Phase 2 | Pending |
 | ING-02 | Phase 2 | Pending |
 | ING-03 | Phase 2 | Pending |
