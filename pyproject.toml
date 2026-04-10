@@ -7,7 +7,12 @@ authors = [
     { name = "JUSTMEETPATEL", email = "justmeetpatel@gmail.com" }
 ]
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "aif360>=0.6.1",
+    "fairlearn>=0.13.0",
+    "pandas>=3.0.2",
+    "scikit-learn>=1.8.0",
+]
 
 [build-system]
 requires = ["uv_build>=0.8.17,<0.9.0"]
