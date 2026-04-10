@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.11"
 dependencies = [
     "aif360>=0.6.1",
+    "alembic>=1.13.0",
     "fairlearn>=0.13.0",
     "fastapi[standard]>=0.115.0",
     "joblib>=1.4.0",
@@ -17,6 +18,7 @@ dependencies = [
     "pyarrow>=15.0.0",
     "python-multipart>=0.0.9",
     "scikit-learn>=1.8.0",
+    "sqlalchemy>=2.0.0",
 ]
 
 [build-system]
