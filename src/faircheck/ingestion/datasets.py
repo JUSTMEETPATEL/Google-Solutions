@@ -90,9 +90,14 @@ class DatasetChunker:
                 score += 0.5
 
             # Rule 2 – low-cardinality categorical.
-            if df[col].dtype == object or pd.api.types.is_categorical_dtype(
-                df[col]
-            ):
+            col_dtype = df[col].dtype
+            is_string_like = (
+                col_dtype == object
+                or isinstance(col_dtype, pd.CategoricalDtype)
+                or isinstance(col_dtype, pd.StringDtype)
+                or str(col_dtype) == "string"
+            )
+            if is_string_like:
                 nunique = df[col].nunique()
                 if 2 <= nunique <= 10:
                     score += 0.4
