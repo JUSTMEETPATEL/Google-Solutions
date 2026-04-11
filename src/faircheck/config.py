@@ -6,8 +6,16 @@ DEFAULT_CONFIG = {
         "default_thresholds": {
             "demographic_parity_difference": 0.10,
             "equalized_odds_difference": 0.10,
-            "disparate_impact_ratio": 0.80
-        }
+            "disparate_impact_ratio": 0.80,
+            "predictive_parity": 0.10,
+            "calibration_by_group": 0.05,
+            "individual_fairness": 0.80,
+        },
+        "warning_factor": 0.8,
+    },
+    "individual_fairness": {
+        "lipschitz_constant": 1.0,
+        "sample_size": 1000,
     },
     "attributes": {
         "protected": ["gender", "race", "age"]
