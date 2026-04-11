@@ -1,83 +1,116 @@
-/** FairCheck TUI — API client for FastAPI backend. */
+/**
+ * FairCheck API client for the TUI.
+ *
+ * Wraps HTTP calls to the local FastAPI backend.
+ * All methods expect the server to already be running on the given port.
+ */
 
-import { readFileSync, existsSync } from "fs";
-import { homedir } from "os";
-import { join } from "path";
+import { readFile } from "node:fs/promises";
+import { basename } from "node:path";
 
-const DEFAULT_PORT = 8000;
-
-export function getBaseUrl(): string {
-  try {
-    const portFile = join(homedir(), ".faircheck", "port");
-    if (existsSync(portFile)) {
-      const port = parseInt(readFileSync(portFile, "utf-8").trim(), 10);
-      if (!isNaN(port)) return `http://localhost:${port}`;
-    }
-  } catch {
-    // fall through
-  }
-  return `http://localhost:${DEFAULT_PORT}`;
+/** Base URL builder for the local API. */
+function baseUrl(port: number): string {
+  return `http://127.0.0.1:${port}/api/v1`;
 }
 
-export async function healthCheck(): Promise<boolean> {
-  try {
-    const url = getBaseUrl();
-    const res = await fetch(`${url}/api/health`);
-    return res.ok;
-  } catch {
-    return false;
-  }
+// ---------- Scan ----------
+
+export interface ScanResult {
+  session_id: string;
+  status: string;
+  protected_attributes: Array<{
+    name: string;
+    confidence: number;
+  }>;
+  bias_metrics: Record<string, {
+    value: number;
+    threshold: number;
+    status: "pass" | "warning" | "fail";
+  }>;
+  risk_level: string;
+  [key: string]: unknown;
 }
 
+/**
+ * Upload model + dataset and run a bias scan.
+ *
+ * Uses the Web Fetch API with a FormData body.
+ * Node 18+ supports fetch and FormData natively.
+ */
 export async function runScan(
+  port: number,
   modelPath: string,
   datasetPath: string,
-  config?: Record<string, unknown>
-): Promise<Record<string, unknown>> {
-  const url = getBaseUrl();
-  const formData = new FormData();
+): Promise<ScanResult> {
+  const modelData = new Uint8Array(await readFile(modelPath));
+  const datasetData = new Uint8Array(await readFile(datasetPath));
 
-  const modelBuf = readFileSync(modelPath);
-  const datasetBuf = readFileSync(datasetPath);
-  const modelBlob = new Blob([modelBuf]);
-  const datasetBlob = new Blob([datasetBuf]);
+  const form = new FormData();
+  form.append("model", new Blob([modelData]), basename(modelPath));
+  form.append("dataset", new Blob([datasetData]), basename(datasetPath));
 
-  formData.append("model", modelBlob, modelPath.split("/").pop()!);
-  formData.append("dataset", datasetBlob, datasetPath.split("/").pop()!);
-  if (config) {
-    formData.append("config", JSON.stringify(config));
+  const res = await fetch(`${baseUrl(port)}/scan`, {
+    method: "POST",
+    body: form,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Scan failed (${res.status}): ${text}`);
   }
 
-  const res = await fetch(`${url}/api/scan`, {
-    method: "POST",
-    body: formData,
-  });
-  return res.json() as Promise<Record<string, unknown>>;
+  return (await res.json()) as ScanResult;
 }
 
-export async function listSessions(): Promise<Record<string, unknown>[]> {
-  const url = getBaseUrl();
-  const res = await fetch(`${url}/api/sessions`);
-  return res.json() as Promise<Record<string, unknown>[]>;
+// ---------- Sessions ----------
+
+export interface SessionSummary {
+  id: string;
+  model_path: string;
+  risk_level: string;
+  created_at: string;
+  [key: string]: unknown;
 }
 
-export async function getSession(
-  id: string
-): Promise<Record<string, unknown>> {
-  const url = getBaseUrl();
-  const res = await fetch(`${url}/api/sessions/${id}`);
-  return res.json() as Promise<Record<string, unknown>>;
+/**
+ * List past scan sessions.
+ */
+export async function getSessions(port: number): Promise<SessionSummary[]> {
+  const res = await fetch(`${baseUrl(port)}/sessions`);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to list sessions (${res.status}): ${text}`);
+  }
+  return (await res.json()) as SessionSummary[];
 }
 
+// ---------- Report ----------
+
+export interface ReportResult {
+  path?: string;
+  message?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Request PDF report generation for a session.
+ */
 export async function generateReport(
+  port: number,
   sessionId: string,
-  format: string = "pdf"
-): Promise<Record<string, unknown>> {
-  const url = getBaseUrl();
-  const res = await fetch(`${url}/api/report`, {
+): Promise<ReportResult> {
+  const res = await fetch(`${baseUrl(port)}/report`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ session_id: sessionId, format }),
+    body: JSON.stringify({ session_id: sessionId }),
   });
-  return res.json() as Promise<Record<string, unknown>>;
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Report generation failed (${res.status}): ${text}`);
+  }
+
+  return (await res.json()) as ReportResult;
 }
+
+
