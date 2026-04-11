@@ -1,0 +1,36 @@
+<section class="page-break">
+    <h1>EU AI Act — Article 14: Human Oversight</h1>
+    <p class="regulation-ref">Reference: Regulation (EU) 2024/1689, Article 14</p>
+
+    {% set art14 = regulation_report.article_mappings | selectattr('article', 'equalto', 'Article 14') | first %}
+
+    <div class="requirement-box">
+        <h3>Requirement</h3>
+        <p>{{ art14.requirement }}</p>
+    </div>
+
+    <div class="status-badge status-{{ art14.status }}">
+        Status: {{ art14.status | replace('_', ' ') | title }}
+    </div>
+
+    <h3>Evidence</h3>
+    <p>{{ art14.evidence }}</p>
+
+    {% if report.oversight %}
+    <h3>Oversight Record</h3>
+    <table>
+        <tr><td><strong>Reviewer</strong></td><td>{{ report.oversight.get('reviewer', 'N/A') }}</td></tr>
+        <tr><td><strong>Date</strong></td><td>{{ report.oversight.get('date', 'N/A') }}</td></tr>
+        <tr><td><strong>Decision</strong></td><td>{{ report.oversight.get('decision', 'N/A') | title }}</td></tr>
+        {% if report.oversight.get('notes') %}
+        <tr><td><strong>Notes</strong></td><td>{{ report.oversight.get('notes') }}</td></tr>
+        {% endif %}
+    </table>
+    {% else %}
+    <div class="warning-box">
+        <p><strong>⚠ No human oversight recorded.</strong></p>
+        <p>A qualified compliance officer should review this report and record 
+        their assessment before the AI system is deployed or continues in operation.</p>
+    </div>
+    {% endif %}
+</section>

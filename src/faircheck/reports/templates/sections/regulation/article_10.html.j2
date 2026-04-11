@@ -1,0 +1,34 @@
+<section class="page-break">
+    <h1>EU AI Act — Article 10: Data and Data Governance</h1>
+    <p class="regulation-ref">Reference: Regulation (EU) 2024/1689, Article 10</p>
+
+    {% set art10 = regulation_report.article_mappings | selectattr('article', 'equalto', 'Article 10') | first %}
+
+    <div class="requirement-box">
+        <h3>Requirement</h3>
+        <p>{{ art10.requirement }}</p>
+    </div>
+
+    <div class="status-badge status-{{ art10.status }}">
+        Status: {{ art10.status | replace('_', ' ') | title }}
+    </div>
+
+    <h3>Evidence</h3>
+    <p>{{ art10.evidence }}</p>
+
+    <h3>Training Data Description</h3>
+    <p>{{ report.training_data_description or 'Not provided. Organizations should document training data composition, collection methodology, and potential biases.' }}</p>
+
+    <h3>Bias Monitoring</h3>
+    {% set results = report.analysis_results.get('results', {}) %}
+    {% if results %}
+    <p>Bias has been monitored across the following protected attributes:</p>
+    <ul>
+        {% for attr in results.keys() %}
+        <li><strong>{{ attr | replace('_', ' ') | title }}</strong> — {{ results[attr].get('metrics', {}) | length }} metrics evaluated</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="placeholder">No bias monitoring data available.</p>
+    {% endif %}
+</section>

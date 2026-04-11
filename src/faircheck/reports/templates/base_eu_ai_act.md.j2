@@ -1,0 +1,87 @@
+# AI Bias Audit Report — EU AI Act Compliance
+
+**Model:** {{ report.model_name }} (v{{ report.model_version }})
+**Audit Date:** {{ report.audit_date }}
+{% if report.reviewer %}**Reviewer:** {{ report.reviewer }}{% endif %}
+**Regulation Standard:** EU AI Act (Regulation (EU) 2024/1689)
+{% if report.session_id %}**Session ID:** {{ report.session_id }}{% endif %}
+
+---
+
+## Executive Summary
+
+Overall Risk Level: **{{ report.analysis_results.get('overall_risk_level', 'unknown') | upper }}**
+
+{% set results = report.analysis_results.get('results', {}) %}
+{% if results %}
+{% set ns = namespace(pass_count=0, warn_count=0, fail_count=0) %}
+{% for attr_name, attr_data in results.items() %}
+{% for m_name, m_data in attr_data.get('metrics', {}).items() %}
+{% if m_data.get('status') == 'pass' %}{% set ns.pass_count = ns.pass_count + 1 %}
+{% elif m_data.get('status') == 'warning' %}{% set ns.warn_count = ns.warn_count + 1 %}
+{% elif m_data.get('status') == 'fail' %}{% set ns.fail_count = ns.fail_count + 1 %}
+{% endif %}
+{% endfor %}
+{% endfor %}
+Results: ✅ {{ ns.pass_count }} passed | ⚠️ {{ ns.warn_count }} warnings | ❌ {{ ns.fail_count }} failed
+{% endif %}
+
+---
+
+## Bias Analysis Results
+
+{% for attr_name, attr_data in results.items() %}
+### Protected Attribute: {{ attr_name | replace('_', ' ') | title }}
+
+| Metric | Threshold | Value | Status |
+|--------|-----------|-------|--------|
+{% for m_name, m_data in attr_data.get('metrics', {}).items() %}
+| {{ m_name | replace('_', ' ') | title }} | {{ m_data.get('threshold', '') }} | {{ '%.4f' % m_data.get('value', 0) if m_data.get('value') is not none else 'N/A' }} | {{ m_data.get('status', '') | upper }} |
+{% endfor %}
+
+{% endfor %}
+
+---
+
+## EU AI Act Regulatory Compliance
+
+### Risk Classification: **{{ regulation_report.risk_classification | upper }}**
+
+### Regulatory Cross-Reference
+
+| Article | Title | Report Section | Status |
+|---------|-------|----------------|--------|
+{% for m in regulation_report.article_mappings %}
+| {{ m.article }} | {{ m.title }} | {{ m.report_section }} | {{ m.status | replace('_', ' ') | title }} |
+{% endfor %}
+
+{% for m in regulation_report.article_mappings %}
+### {{ m.article }}: {{ m.title }}
+
+**Requirement:** {{ m.requirement }}
+
+**Status:** {{ m.status | replace('_', ' ') | title }}
+
+**Evidence:** {{ m.evidence }}
+
+{% endfor %}
+
+---
+
+## Legal Disclaimer
+
+> {{ regulation_report.disclaimer }}
+
+---
+
+## Appendix
+
+**Platform:** FairCheck v0.1.0
+**Libraries:** Fairlearn, scikit-learn, AIF360
+
+{% set scan = report.analysis_results.get('scan_metadata', {}) %}
+{% if scan %}
+- Timestamp: {{ scan.get('timestamp', 'N/A') }}
+- Sample Size: {{ scan.get('sample_size', 'N/A') }}
+- Metrics Computed: {{ scan.get('metrics_computed', 'N/A') }}
+{% endif %}
