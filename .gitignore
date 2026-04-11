@@ -1,1 +1,51 @@
+# Python
 __pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing / Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# SQLite databases (local-first, never commit user data)
+*.db
+*.sqlite
+*.sqlite3
+
+# FairCheck runtime
+~/.faircheck/
+.faircheck/
+
+# Environment
+.env
+.env.local
+
+# Node (TUI / Web layers)
+node_modules/
+npm-debug.log*
+
+# Reports (generated artifacts)
+*.pdf
+*.docx
