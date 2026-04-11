@@ -1,0 +1,39 @@
+<section class="page-break">
+    <h1>Bias Analysis Results</h1>
+    {% set results = report.analysis_results.get('results', {}) %}
+    {% for attr_name, attr_data in results.items() %}
+    <h2>Protected Attribute: {{ attr_name | replace('_', ' ') | title }}</h2>
+    {% set metrics = attr_data.get('metrics', {}) %}
+    {% if metrics %}
+    <table>
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th>Threshold</th>
+                <th>Value</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m_name, m_data in metrics.items() %}
+            <tr>
+                <td>{{ m_name | replace('_', ' ') | title }}</td>
+                <td>{{ m_data.get('threshold', '') }}</td>
+                <td>{{ '%.4f' % m_data.get('value', 0) if m_data.get('value') is not none else 'N/A' }}</td>
+                <td class="status-{{ m_data.get('status', 'skipped') }}">{{ m_data.get('status', '') | upper }}</td>
+            </tr>
+            {% if m_data.get('warning_message') %}
+            <tr><td colspan="4" class="placeholder">⚠ {{ m_data.get('warning_message') }}</td></tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="placeholder">No metrics computed for this attribute.</p>
+    {% endif %}
+    {% endfor %}
+
+    {% if not results %}
+    <p class="placeholder">No analysis results available.</p>
+    {% endif %}
+</section>

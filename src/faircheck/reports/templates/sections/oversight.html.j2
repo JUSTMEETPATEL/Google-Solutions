@@ -1,0 +1,23 @@
+<section>
+    <h1>Human Oversight Record</h1>
+    {% if report.oversight %}
+        <table>
+            <tr><th>Field</th><th>Value</th></tr>
+            <tr><td>Reviewer</td><td>{{ report.oversight.get('reviewer', '') }}</td></tr>
+            <tr><td>Date</td><td>{{ report.oversight.get('date', '') }}</td></tr>
+            <tr><td>Decision</td><td>{{ report.oversight.get('decision', '') }}</td></tr>
+        </table>
+        {% if report.oversight.get('notes') %}
+        <h2>Notes</h2>
+        <p>{{ report.oversight.get('notes') }}</p>
+        {% endif %}
+        <div style="margin-top: 24pt; border-top: 1px solid #d1d5db; padding-top: 12pt;">
+            <p><strong>Signature:</strong> _________________________________</p>
+            <p><strong>Date:</strong> _________________________________</p>
+        </div>
+    {% else %}
+        <p class="placeholder">No human oversight decision has been recorded for this audit.
+        A compliance officer should review the results above and record their decision
+        before this report is considered complete.</p>
+    {% endif %}
+</section>

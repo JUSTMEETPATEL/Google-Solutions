@@ -1,0 +1,42 @@
+<section>
+    <h1>Demographic Performance Breakdown</h1>
+    {% if report.chart_images %}
+        {% for chart_name, chart_b64 in report.chart_images.items() %}
+        <div class="chart-container">
+            <h3>{{ chart_name | replace('_', ' ') | title }}</h3>
+            <img src="data:image/png;base64,{{ chart_b64 }}" alt="{{ chart_name }}">
+        </div>
+        {% endfor %}
+    {% else %}
+        {# Fallback to table if no charts #}
+        {% set results = report.analysis_results.get('results', {}) %}
+        {% for attr_name, attr_data in results.items() %}
+        {% set breakdown = attr_data.get('performance_breakdown', {}) %}
+        {% if breakdown %}
+        <h2>{{ attr_name | replace('_', ' ') | title }}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Group</th>
+                    <th>Accuracy</th>
+                    <th>Precision</th>
+                    <th>Recall</th>
+                    <th>F1</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for group, perf in breakdown.items() %}
+                <tr>
+                    <td>{{ group }}</td>
+                    <td>{{ '%.4f' % perf.get('accuracy', 0) }}</td>
+                    <td>{{ '%.4f' % perf.get('precision', 0) }}</td>
+                    <td>{{ '%.4f' % perf.get('recall', 0) }}</td>
+                    <td>{{ '%.4f' % perf.get('f1', 0) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        {% endfor %}
+    {% endif %}
+</section>

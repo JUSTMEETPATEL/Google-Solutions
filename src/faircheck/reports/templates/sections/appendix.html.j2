@@ -1,0 +1,47 @@
+<section class="page-break">
+    <h1>Appendix: Raw Data &amp; Methodology</h1>
+
+    <h2>Methodology</h2>
+    <p>This audit was conducted using the <strong>FairCheck</strong> platform (v0.1.0),
+    which computes fairness metrics using the following libraries:</p>
+    <ul>
+        <li><strong>Fairlearn</strong> — Demographic Parity Difference, Equalized Odds Difference</li>
+        <li><strong>scikit-learn</strong> — Precision (Predictive Parity), Calibration Error</li>
+        <li><strong>Custom</strong> — Individual Fairness (cosine-distance Lipschitz consistency)</li>
+    </ul>
+
+    <h2>Metric Definitions</h2>
+    <table>
+        <thead><tr><th>Metric</th><th>Definition</th><th>Ideal Value</th></tr></thead>
+        <tbody>
+            <tr><td>Demographic Parity Difference</td><td>Max difference in selection rates across groups</td><td>0 (lower is fairer)</td></tr>
+            <tr><td>Equalized Odds Difference</td><td>Max of TPR difference and FPR difference</td><td>0 (lower is fairer)</td></tr>
+            <tr><td>Disparate Impact Ratio</td><td>Min/max selection rate ratio</td><td>1.0 (≥ 0.80 per EEOC)</td></tr>
+            <tr><td>Predictive Parity</td><td>Max difference in precision across groups</td><td>0 (lower is fairer)</td></tr>
+            <tr><td>Calibration by Group</td><td>Max ECE difference across groups</td><td>0 (lower is fairer)</td></tr>
+            <tr><td>Individual Fairness</td><td>Fraction of pairs satisfying Lipschitz condition</td><td>1.0 (higher is fairer)</td></tr>
+        </tbody>
+    </table>
+
+    <h2>Raw Metric Values</h2>
+    {% set results = report.analysis_results.get('results', {}) %}
+    {% for attr_name, attr_data in results.items() %}
+    <h3>{{ attr_name | replace('_', ' ') | title }}</h3>
+    {% set metrics = attr_data.get('metrics', {}) %}
+    {% for m_name, m_data in metrics.items() %}
+    <p><strong>{{ m_name | replace('_', ' ') | title }}:</strong>
+        Value = {{ m_data.get('value', 'N/A') }},
+        Threshold = {{ m_data.get('threshold', 'N/A') }},
+        Status = {{ m_data.get('status', 'N/A') | upper }}
+    </p>
+    {% endfor %}
+    {% endfor %}
+
+    {% set scan = report.analysis_results.get('scan_metadata', {}) %}
+    {% if scan %}
+    <h2>Scan Metadata</h2>
+    <p>Timestamp: {{ scan.get('timestamp', 'N/A') }}</p>
+    <p>Sample Size: {{ scan.get('sample_size', 'N/A') }}</p>
+    <p>Metrics Computed: {{ scan.get('metrics_computed', 'N/A') }}</p>
+    {% endif %}
+</section>

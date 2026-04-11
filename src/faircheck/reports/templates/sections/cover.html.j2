@@ -1,0 +1,11 @@
+<section class="cover">
+    <h1>AI Bias Audit Report</h1>
+    <p class="subtitle">FairCheck — Automated Fairness Analysis</p>
+    <div class="meta">
+        <p><strong>Model:</strong> {{ report.model_name }} (v{{ report.model_version }})</p>
+        <p><strong>Audit Date:</strong> {{ report.audit_date }}</p>
+        {% if report.reviewer %}<p><strong>Reviewer:</strong> {{ report.reviewer }}</p>{% endif %}
+        <p><strong>Regulation Standard:</strong> {{ report.regulation_standard }}</p>
+        {% if report.session_id %}<p><strong>Session ID:</strong> {{ report.session_id }}</p>{% endif %}
+    </div>
+</section>
