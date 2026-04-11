@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>FairCheck AI Bias Audit Report — {{ report.model_name }}</title>
+    <style>{% include "styles/report.css" %}</style>
+</head>
+<body>
+    {% include "sections/cover.html.j2" %}
+    {% include "sections/executive_summary.html.j2" %}
+    {% include "sections/model_card.html.j2" %}
+    {% include "sections/metrics_table.html.j2" %}
+    {% include "sections/demographic_charts.html.j2" %}
+    {% include "sections/mitigation.html.j2" %}
+    {% include "sections/oversight.html.j2" %}
+    {% include "sections/appendix.html.j2" %}
+</body>
+</html>

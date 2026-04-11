@@ -1,0 +1,28 @@
+<section>
+    <h1>Mitigation Applied</h1>
+    {% if report.mitigation %}
+        <p><strong>Algorithm:</strong> {{ report.mitigation.get('algorithm', 'N/A') }}</p>
+        {% if report.mitigation.get('before') and report.mitigation.get('after') %}
+        <h2>Before / After Comparison</h2>
+        <table>
+            <thead>
+                <tr><th>Metric</th><th>Before</th><th>After</th><th>Change</th></tr>
+            </thead>
+            <tbody>
+                {% for metric_name, before_val in report.mitigation.get('before', {}).items() %}
+                {% set after_val = report.mitigation.get('after', {}).get(metric_name, before_val) %}
+                <tr>
+                    <td>{{ metric_name | replace('_', ' ') | title }}</td>
+                    <td>{{ '%.4f' % before_val }}</td>
+                    <td>{{ '%.4f' % after_val }}</td>
+                    <td>{{ '%.4f' % (after_val - before_val) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    {% else %}
+        <p class="placeholder">No mitigation has been applied to this model. Run a mitigation
+        algorithm to see before/after bias metric comparison here.</p>
+    {% endif %}
+</section>

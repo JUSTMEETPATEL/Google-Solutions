@@ -1,0 +1,102 @@
+# AI Bias Audit Report
+
+**Model:** {{ report.model_name }} (v{{ report.model_version }})
+**Audit Date:** {{ report.audit_date }}
+{% if report.reviewer %}**Reviewer:** {{ report.reviewer }}{% endif %}
+**Regulation Standard:** {{ report.regulation_standard }}
+{% if report.session_id %}**Session ID:** {{ report.session_id }}{% endif %}
+
+---
+
+## Executive Summary
+
+Overall Risk Level: **{{ report.analysis_results.get('overall_risk_level', 'unknown') | upper }}**
+
+{% set results = report.analysis_results.get('results', {}) %}
+{% if results %}
+{% set ns = namespace(pass_count=0, warn_count=0, fail_count=0) %}
+{% for attr_name, attr_data in results.items() %}
+{% for m_name, m_data in attr_data.get('metrics', {}).items() %}
+{% if m_data.get('status') == 'pass' %}{% set ns.pass_count = ns.pass_count + 1 %}
+{% elif m_data.get('status') == 'warning' %}{% set ns.warn_count = ns.warn_count + 1 %}
+{% elif m_data.get('status') == 'fail' %}{% set ns.fail_count = ns.fail_count + 1 %}
+{% endif %}
+{% endfor %}
+{% endfor %}
+Results: ✅ {{ ns.pass_count }} passed | ⚠️ {{ ns.warn_count }} warnings | ❌ {{ ns.fail_count }} failed
+{% endif %}
+
+---
+
+## Model Card
+
+### Training Data
+{{ report.training_data_description or '_No training data description provided._' }}
+
+### Intended Use
+{{ report.intended_use or '_No intended use specified._' }}
+
+### Known Limitations
+{{ report.known_limitations or '_No known limitations documented._' }}
+
+---
+
+## Bias Analysis Results
+
+{% for attr_name, attr_data in results.items() %}
+### Protected Attribute: {{ attr_name | replace('_', ' ') | title }}
+
+| Metric | Threshold | Value | Status |
+|--------|-----------|-------|--------|
+{% for m_name, m_data in attr_data.get('metrics', {}).items() %}
+| {{ m_name | replace('_', ' ') | title }} | {{ m_data.get('threshold', '') }} | {{ '%.4f' % m_data.get('value', 0) if m_data.get('value') is not none else 'N/A' }} | {{ m_data.get('status', '') | upper }} |
+{% endfor %}
+
+{% set breakdown = attr_data.get('performance_breakdown', {}) %}
+{% if breakdown %}
+#### Per-Group Performance
+
+| Group | Accuracy | Precision | Recall | F1 |
+|-------|----------|-----------|--------|-----|
+{% for group, perf in breakdown.items() %}
+| {{ group }} | {{ '%.4f' % perf.get('accuracy', 0) }} | {{ '%.4f' % perf.get('precision', 0) }} | {{ '%.4f' % perf.get('recall', 0) }} | {{ '%.4f' % perf.get('f1', 0) }} |
+{% endfor %}
+{% endif %}
+
+{% endfor %}
+
+---
+
+## Mitigation Applied
+
+{% if report.mitigation %}
+**Algorithm:** {{ report.mitigation.get('algorithm', 'N/A') }}
+{% else %}
+_No mitigation has been applied to this model._
+{% endif %}
+
+---
+
+## Human Oversight
+
+{% if report.oversight %}
+- **Reviewer:** {{ report.oversight.get('reviewer', '') }}
+- **Date:** {{ report.oversight.get('date', '') }}
+- **Decision:** {{ report.oversight.get('decision', '') }}
+{% else %}
+_No human oversight decision has been recorded._
+{% endif %}
+
+---
+
+## Appendix
+
+**Platform:** FairCheck v0.1.0
+**Libraries:** Fairlearn, scikit-learn, AIF360
+
+{% set scan = report.analysis_results.get('scan_metadata', {}) %}
+{% if scan %}
+- Timestamp: {{ scan.get('timestamp', 'N/A') }}
+- Sample Size: {{ scan.get('sample_size', 'N/A') }}
+- Metrics Computed: {{ scan.get('metrics_computed', 'N/A') }}
+{% endif %}

@@ -1,0 +1,33 @@
+<section>
+    <h1>Executive Summary</h1>
+    {% set risk = report.analysis_results.get('overall_risk_level', 'unknown') %}
+    <p>This report presents the results of an automated bias audit conducted on
+    <strong>{{ report.model_name }}</strong> using the FairCheck platform.</p>
+
+    <p>Overall Risk Level:
+        <span class="risk-{{ risk }}">{{ risk | upper }}</span>
+    </p>
+
+    {% set results = report.analysis_results.get('results', {}) %}
+    {% if results %}
+    {% set ns = namespace(pass_count=0, warn_count=0, fail_count=0) %}
+    {% for attr_name, attr_data in results.items() %}
+        {% for m_name, m_data in attr_data.get('metrics', {}).items() %}
+            {% if m_data.get('status') == 'pass' %}{% set ns.pass_count = ns.pass_count + 1 %}
+            {% elif m_data.get('status') == 'warning' %}{% set ns.warn_count = ns.warn_count + 1 %}
+            {% elif m_data.get('status') == 'fail' %}{% set ns.fail_count = ns.fail_count + 1 %}
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+    <p>Across all protected attributes:
+        <span class="status-pass">{{ ns.pass_count }} passed</span>,
+        <span class="status-warning">{{ ns.warn_count }} warnings</span>,
+        <span class="status-fail">{{ ns.fail_count }} failed</span>.
+    </p>
+    {% endif %}
+
+    {% if report.analysis_results.get('domain_guidance') %}
+    <p><strong>Domain:</strong> {{ report.analysis_results['domain_guidance'].get('domain', '') | title }}.
+    {{ report.analysis_results['domain_guidance'].get('rationale', '') }}</p>
+    {% endif %}
+</section>
