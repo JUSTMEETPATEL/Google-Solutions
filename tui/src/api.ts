@@ -5,7 +5,7 @@
  * All methods expect the server to already be running on the given port.
  */
 
-import { createReadStream } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
 /** Base URL builder for the local API. */
@@ -42,14 +42,12 @@ export async function runScan(
   modelPath: string,
   datasetPath: string,
 ): Promise<ScanResult> {
-  // Node 20+ has a global File constructor. For older versions we fall back
-  // to Blob-from-stream. Using the File web API keeps this browser-compat.
-  const modelBlob = new Blob([await streamToBuffer(modelPath)]);
-  const datasetBlob = new Blob([await streamToBuffer(datasetPath)]);
+  const modelData = new Uint8Array(await readFile(modelPath));
+  const datasetData = new Uint8Array(await readFile(datasetPath));
 
   const form = new FormData();
-  form.append("model", modelBlob, basename(modelPath));
-  form.append("dataset", datasetBlob, basename(datasetPath));
+  form.append("model", new Blob([modelData]), basename(modelPath));
+  form.append("dataset", new Blob([datasetData]), basename(datasetPath));
 
   const res = await fetch(`${baseUrl(port)}/scan`, {
     method: "POST",
@@ -115,17 +113,4 @@ export async function generateReport(
   return (await res.json()) as ReportResult;
 }
 
-// ---------- Helpers ----------
 
-/**
- * Read a file into a Buffer via a readable stream.
- */
-async function streamToBuffer(filePath: string): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    const stream = createReadStream(filePath);
-    stream.on("data", (chunk) => chunks.push(Buffer.from(chunk as Buffer)));
-    stream.on("end", () => resolve(Buffer.concat(chunks)));
-    stream.on("error", reject);
-  });
-}
