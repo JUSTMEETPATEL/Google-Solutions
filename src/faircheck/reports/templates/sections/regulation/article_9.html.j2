@@ -1,0 +1,49 @@
+<section class="page-break">
+    <h1>EU AI Act — Article 9: Risk Management System</h1>
+    <p class="regulation-ref">Reference: Regulation (EU) 2024/1689, Article 9</p>
+
+    {% set art9 = regulation_report.article_mappings | selectattr('article', 'equalto', 'Article 9') | first %}
+
+    <div class="requirement-box">
+        <h3>Requirement</h3>
+        <p>{{ art9.requirement }}</p>
+    </div>
+
+    <div class="status-badge status-{{ art9.status }}">
+        Status: {{ art9.status | replace('_', ' ') | title }}
+    </div>
+
+    <h3>Evidence</h3>
+    <p>{{ art9.evidence }}</p>
+
+    <h3>Identified Risks</h3>
+    {% set results = report.analysis_results.get('results', {}) %}
+    {% if results %}
+    <table>
+        <thead>
+            <tr>
+                <th>Attribute</th>
+                <th>Metric</th>
+                <th>Status</th>
+                <th>Risk Level</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for attr, attr_data in results.items() %}
+            {% for m_name, m_data in attr_data.get('metrics', {}).items() %}
+            {% if m_data.get('status') in ['fail', 'warning'] %}
+            <tr>
+                <td>{{ attr | replace('_', ' ') | title }}</td>
+                <td>{{ m_name | replace('_', ' ') | title }}</td>
+                <td class="status-{{ m_data.get('status', 'skipped') }}">{{ m_data.get('status', '') | upper }}</td>
+                <td>{{ 'High' if m_data.get('status') == 'fail' else 'Medium' }}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="placeholder">No risks identified — analysis results not available.</p>
+    {% endif %}
+</section>

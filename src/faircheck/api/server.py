@@ -1,7 +1,7 @@
-"""Programmatic server launcher with automatic port discovery.
+"""Programmatic server launcher with lifecycle management.
 
-Finds a free port, writes it to ``~/.faircheck/port`` so the TUI and
-Web frontends can discover the running instance, then starts Uvicorn.
+Finds a free port, writes port + PID files, prevents duplicate instances,
+registers cleanup, then starts Uvicorn.
 
 Usage::
 
@@ -11,9 +11,17 @@ Usage::
 from __future__ import annotations
 
 import socket
-from pathlib import Path
+import sys
 
 import uvicorn
+
+from faircheck.api.lifecycle import (
+    cleanup_files,
+    is_server_running,
+    register_cleanup,
+    write_pid_file,
+    write_port_file,
+)
 
 
 def find_free_port() -> int:
@@ -25,12 +33,23 @@ def find_free_port() -> int:
 
 def serve() -> None:
     """Start the FairCheck API server on a random free port."""
+    # INT-04: Prevent duplicate instances
+    if is_server_running():
+        print("⚠ FairCheck server is already running. Exiting.")
+        sys.exit(0)
+
     port = find_free_port()
 
-    # Write the port file for TUI / Web discovery (API-01)
-    port_file = Path.home() / ".faircheck" / "port"
-    port_file.parent.mkdir(parents=True, exist_ok=True)
-    port_file.write_text(str(port))
+    # INT-02: Write port file for TUI/Web discovery
+    write_port_file(port)
+
+    # INT-04: Write PID file
+    write_pid_file()
+
+    # Register cleanup for graceful shutdown
+    register_cleanup()
+
+    print(f"  ⚖  FairCheck API starting on http://127.0.0.1:{port}")
 
     uvicorn.run(
         "faircheck.api.main:app",

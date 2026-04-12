@@ -1,0 +1,43 @@
+<section class="page-break">
+    <h1>Regulatory Cross-Reference</h1>
+    <p>The following table maps each section of this report to the EU AI Act article it addresses.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>EU AI Act Article</th>
+                <th>Title</th>
+                <th>Report Section</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in regulation_report.article_mappings %}
+            <tr>
+                <td><strong>{{ m.article }}</strong></td>
+                <td>{{ m.title }}</td>
+                <td>{{ m.report_section }}</td>
+                <td class="status-{{ m.status }}">{{ m.status | replace('_', ' ') | title }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Risk Classification</h3>
+    <div class="status-badge status-{{ 'fail' if regulation_report.risk_classification == 'high' else ('warning' if regulation_report.risk_classification == 'medium' else 'pass') }}">
+        AI System Risk Level: {{ regulation_report.risk_classification | upper }}
+    </div>
+    <p>
+        {% if regulation_report.risk_classification == 'high' %}
+        This AI system exhibits significant fairness risks. Under the EU AI Act, 
+        high-risk systems require additional conformity assessment, documentation, 
+        and ongoing monitoring before deployment.
+        {% elif regulation_report.risk_classification == 'medium' %}
+        This AI system shows moderate fairness concerns. Review the flagged metrics 
+        and consider applying mitigation measures before deployment.
+        {% else %}
+        This AI system meets all configured fairness thresholds. Continue regular 
+        monitoring to ensure ongoing compliance.
+        {% endif %}
+    </p>
+</section>

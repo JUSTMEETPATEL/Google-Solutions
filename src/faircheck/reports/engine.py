@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -24,15 +25,41 @@ class ReportEngine:
             autoescape=True,
         )
 
-    def render_html(self, data: ReportData) -> str:
-        """Render the full HTML report (used for PDF generation)."""
-        template = self.env.get_template("base.html.j2")
-        return template.render(report=data)
+    def render_html(
+        self, data: ReportData, regulation: str | None = None, **extra: Any
+    ) -> str:
+        """Render the full HTML report (used for PDF generation).
 
-    def render_markdown(self, data: ReportData) -> str:
+        Parameters
+        ----------
+        regulation : str, optional
+            Regulation standard key (e.g. ``"eu_ai_act"``).  When set,
+            uses the regulation-specific master template and injects
+            a ``regulation_report`` context variable.
+        """
+        ctx = self._build_context(data, regulation, extra)
+        tpl_name = f"base_{regulation}.html.j2" if regulation else "base.html.j2"
+        template = self.env.get_template(tpl_name)
+        return template.render(**ctx)
+
+    def render_markdown(
+        self, data: ReportData, regulation: str | None = None, **extra: Any
+    ) -> str:
         """Render the Markdown report."""
-        template = self.env.get_template("base.md.j2")
-        return template.render(report=data)
+        ctx = self._build_context(data, regulation, extra)
+        tpl_name = f"base_{regulation}.md.j2" if regulation else "base.md.j2"
+        template = self.env.get_template(tpl_name)
+        return template.render(**ctx)
+
+    def _build_context(
+        self, data: ReportData, regulation: str | None, extra: dict
+    ) -> dict[str, Any]:
+        ctx: dict[str, Any] = {"report": data, **extra}
+        if regulation:
+            from faircheck.reports.regulation import RegulationMapper
+            mapper = RegulationMapper()
+            ctx["regulation_report"] = mapper.map(data)
+        return ctx
 
     def get_output_dir(self, session_id: str) -> Path:
         """Return report output directory (D-05)."""

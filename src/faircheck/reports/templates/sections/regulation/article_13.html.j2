@@ -1,0 +1,34 @@
+<section class="page-break">
+    <h1>EU AI Act — Article 13: Transparency</h1>
+    <p class="regulation-ref">Reference: Regulation (EU) 2024/1689, Article 13</p>
+
+    {% set art13 = regulation_report.article_mappings | selectattr('article', 'equalto', 'Article 13') | first %}
+
+    <div class="requirement-box">
+        <h3>Requirement</h3>
+        <p>{{ art13.requirement }}</p>
+    </div>
+
+    <div class="status-badge status-{{ art13.status }}">
+        Status: {{ art13.status | replace('_', ' ') | title }}
+    </div>
+
+    <h3>Evidence</h3>
+    <p>{{ art13.evidence }}</p>
+
+    <h3>Intended Use</h3>
+    <p>{{ report.intended_use or 'Not specified. The deployer should document the intended purpose and scope of this AI system.' }}</p>
+
+    <h3>Known Limitations</h3>
+    <p>{{ report.known_limitations or 'Not documented. Known limitations should be identified and communicated to end users.' }}</p>
+
+    <h3>Methodology</h3>
+    <p>This report uses the following fairness metrics to assess bias:</p>
+    <ul>
+        <li><strong>Demographic Parity Difference</strong> — measures selection rate gap across groups</li>
+        <li><strong>Equalized Odds Difference</strong> — measures TPR/FPR gap across groups</li>
+        <li><strong>Disparate Impact Ratio</strong> — measures proportional selection rate (4/5ths rule)</li>
+        <li><strong>Predictive Parity</strong> — measures precision gap across groups</li>
+        <li><strong>Calibration</strong> — measures probability calibration across groups</li>
+    </ul>
+</section>
