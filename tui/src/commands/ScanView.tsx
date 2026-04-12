@@ -31,11 +31,40 @@ export function ScanView({ results, sessionId, ciMode }: ScanViewProps) {
     }
   }, [ciMode, parsed]);
 
-  const handleWebOpen = () => {
-    // TUI-04: Open web dashboard
-    import("child_process").then(({ exec }) => {
-      exec("open http://localhost:5173");
-    });
+  const handleWebOpen = async () => {
+    // INT-01: TUI→Web handoff with port discovery and session pre-loading
+    try {
+      const { getBaseUrl } = await import("../api.js");
+      const { readFileSync, existsSync } = await import("fs");
+      const { homedir } = await import("os");
+      const { join } = await import("path");
+      const { exec } = await import("child_process");
+
+      // Read port from ~/.faircheck/port (INT-02)
+      const portFile = join(homedir(), ".faircheck", "port");
+      let webUrl = "http://localhost:5173";
+      if (existsSync(portFile)) {
+        const port = readFileSync(portFile, "utf-8").trim();
+        // Poll health before opening (INT-03)
+        const apiUrl = `http://localhost:${port}/api/health`;
+        try {
+          await fetch(apiUrl, { signal: AbortSignal.timeout(3000) });
+        } catch {
+          // Server may not be ready yet, open anyway
+        }
+      }
+
+      // Open with session_id in URL for pre-loading
+      const url = sessionId
+        ? `${webUrl}?session=${sessionId}`
+        : webUrl;
+      exec(`open "${url}"`);
+    } catch {
+      // Fallback: open default URL
+      import("child_process").then(({ exec }) => {
+        exec("open http://localhost:5173");
+      });
+    }
   };
 
   const handleReport = async () => {
