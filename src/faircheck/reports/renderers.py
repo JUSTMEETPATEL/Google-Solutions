@@ -30,6 +30,7 @@ class ReportBuilder:
         data: dict[str, Any],
         formats: list[str] | None = None,
         output_dir: Path | None = None,
+        regulation: str | None = None,
     ) -> dict[str, Path]:
         """Generate reports in requested formats.
 
@@ -41,6 +42,9 @@ class ReportBuilder:
             Output formats: ``"pdf"``, ``"md"``, ``"docx"``.  Default: ``["pdf"]``.
         output_dir : Path, optional
             Override output directory.
+        regulation : str, optional
+            Regulation standard key (e.g. ``"eu_ai_act"``).  When set,
+            uses regulation-specific templates with article mappings.
 
         Returns
         -------
@@ -61,9 +65,9 @@ class ReportBuilder:
         results: dict[str, Path] = {}
         for fmt in formats:
             if fmt == "pdf":
-                results["pdf"] = self._render_pdf(report_data, out_dir)
+                results["pdf"] = self._render_pdf(report_data, out_dir, regulation)
             elif fmt == "md":
-                results["md"] = self._render_md(report_data, out_dir)
+                results["md"] = self._render_md(report_data, out_dir, regulation)
             elif fmt == "docx":
                 results["docx"] = self._render_docx(report_data, out_dir)
             else:
@@ -71,19 +75,23 @@ class ReportBuilder:
 
         return results
 
-    def _render_pdf(self, data: ReportData, out_dir: Path) -> Path:
+    def _render_pdf(
+        self, data: ReportData, out_dir: Path, regulation: str | None = None
+    ) -> Path:
         """Render HTML → PDF via WeasyPrint (RPT-09)."""
         from weasyprint import HTML
 
-        html_content = self.engine.render_html(data)
+        html_content = self.engine.render_html(data, regulation=regulation)
         out_path = out_dir / "faircheck-report.pdf"
         HTML(string=html_content).write_pdf(str(out_path))
         logger.info("PDF report saved: %s", out_path)
         return out_path
 
-    def _render_md(self, data: ReportData, out_dir: Path) -> Path:
+    def _render_md(
+        self, data: ReportData, out_dir: Path, regulation: str | None = None
+    ) -> Path:
         """Render Markdown report (RPT-10)."""
-        md_content = self.engine.render_markdown(data)
+        md_content = self.engine.render_markdown(data, regulation=regulation)
         out_path = out_dir / "faircheck-report.md"
         out_path.write_text(md_content, encoding="utf-8")
         logger.info("Markdown report saved: %s", out_path)
