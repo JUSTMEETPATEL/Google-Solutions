@@ -49,7 +49,7 @@ def serve() -> None:
     # Register cleanup for graceful shutdown
     register_cleanup()
 
-    print(f"  ⚖  FairCheck API starting on http://127.0.0.1:{port}")
+    print(f"  [FairCheck] API starting on http://127.0.0.1:{port}")
 
     uvicorn.run(
         "faircheck.api.main:app",
