@@ -9,7 +9,7 @@ import { PDFExport } from './PDFExport';
 import { FileUpload } from './FileUpload';
 import { useAppStore } from '../store/appStore';
 import { fetchSession } from '../api/client';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Fingerprint } from 'lucide-react';
 
 export function Dashboard() {
   const { selectedSessionId, currentScanResult, regulation, setRegulation } = useAppStore();
@@ -17,21 +17,17 @@ export function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(false);
 
-  // If we have a scan result in the store, use it directly.
-  // Only fetch from API for sessions loaded from sidebar (persisted sessions).
   useEffect(() => {
     if (!selectedSessionId) {
       setFetchedSession(null);
       setFetchError(false);
       return;
     }
-    // If the current scan result matches this session, no need to fetch
     if (currentScanResult?.session_id === selectedSessionId) {
       setFetchedSession(null);
       setFetchError(false);
       return;
     }
-    // Try fetching from the API (for persisted sessions)
     setLoading(true);
     setFetchError(false);
     fetchSession(selectedSessionId)
@@ -40,11 +36,9 @@ export function Dashboard() {
       .finally(() => setLoading(false));
   }, [selectedSessionId, currentScanResult]);
 
-  // No session selected — show upload view
   if (!selectedSessionId) {
     return (
-      <main className="flex-1 flex flex-col items-center justify-center p-8 relative z-0">
-        <div className="absolute inset-0 bg-dark-900/40 backdrop-blur-3xl -z-10" />
+      <main className="flex-1 flex flex-col items-center justify-center p-6 relative z-0">
         <FileUpload />
       </main>
     );
@@ -53,34 +47,27 @@ export function Dashboard() {
   if (loading) {
     return (
       <main className="flex-1 flex flex-col items-center justify-center relative z-0">
-        <div className="absolute inset-0 bg-dark-900/40 backdrop-blur-3xl -z-10" />
-        <Loader2 className="w-10 h-10 text-primary-500 animate-spin mb-4" />
-        <p className="text-dark-400 font-medium animate-pulse">Loading analysis data...</p>
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin mb-4" />
+        <p className="text-dark-400 text-sm font-medium animate-pulse tracking-widest uppercase">Loading Audit Data...</p>
       </main>
     );
   }
 
-  // Determine the session data source: store scan result or fetched session
-  const session = currentScanResult?.session_id === selectedSessionId
-    ? currentScanResult
-    : fetchedSession;
+  const session = currentScanResult?.session_id === selectedSessionId ? currentScanResult : fetchedSession;
 
   if (!session) {
     if (fetchError) {
       return (
         <main className="flex-1 flex flex-col items-center justify-center relative z-0">
-          <div className="absolute inset-0 bg-dark-900/40 backdrop-blur-3xl -z-10" />
           <div className="glass-panel p-6 rounded-2xl flex flex-col items-center text-center max-w-sm">
-            <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-            <p className="text-red-400 font-medium">Failed to load session data.</p>
-            <p className="text-dark-400 text-sm mt-2">Please try selecting another session from the sidebar.</p>
+            <AlertCircle className="w-10 h-10 text-danger-500 mb-3" />
+            <p className="text-danger-500 text-sm font-bold uppercase tracking-wider">Failed to load session</p>
           </div>
         </main>
       );
     }
     return (
-      <main className="flex-1 flex flex-col items-center justify-center relative z-0">
-        <div className="absolute inset-0 bg-dark-900/40 backdrop-blur-3xl -z-10" />
+      <main className="flex-1 flex flex-col items-center justify-center p-6 relative z-0">
         <FileUpload />
       </main>
     );
@@ -89,7 +76,6 @@ export function Dashboard() {
   const analysis = session.analysis_results || {};
   const riskLevel = analysis.overall_risk_level || 'unknown';
 
-  // Count pass/warning/fail
   const counts = { pass: 0, warning: 0, fail: 0 };
   for (const attr of Object.values(analysis.results || {})) {
     for (const m of Object.values((attr as any)?.metrics || {})) {
@@ -101,22 +87,22 @@ export function Dashboard() {
   }
 
   return (
-    <main className="flex-1 overflow-y-auto relative z-0 p-8 lg:p-12">
-      <div className="absolute inset-0 bg-dark-900/40 backdrop-blur-3xl -z-10" />
-      
-      <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-        {/* Header */}
-        <header className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 pb-6 border-b border-white/5">
+    <main className="flex-1 overflow-y-auto relative z-0 p-6">
+      <div className="max-w-[1400px] mx-auto animate-in fade-in zoom-in-95 duration-500 flex flex-col gap-6">
+        
+        {/* Header Bar */}
+        <header className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 pb-4 border-b border-white/5">
           <div>
-            <h2 className="text-3xl font-extrabold text-white tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-dark-300">
-              {session.model_name || 'Bias Analysis Report'}
+            <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+              {session.model_name || 'Audit Report'}
             </h2>
-            <div className="flex items-center gap-3 mt-3">
-              <span className="px-2.5 py-1 rounded-md bg-dark-800 text-dark-300 text-xs font-medium font-mono border border-white/5">
-                ID: {selectedSessionId.substring(0, 8)}
+            <div className="flex items-center gap-3 mt-2">
+              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-dark-900 text-dark-300 text-[10px] font-bold font-mono border border-white/5 tracking-widest uppercase">
+                <Fingerprint className="w-3 h-3" />
+                {selectedSessionId.substring(0, 12)}
               </span>
               {session.created_at && (
-                <span className="text-sm text-dark-400">
+                <span className="text-xs text-dark-400 font-medium">
                   {new Date(session.created_at).toLocaleString()}
                 </span>
               )}
@@ -128,47 +114,57 @@ export function Dashboard() {
           </div>
         </header>
 
-        {/* Risk Card */}
-        <section>
-          <RiskScoreCard level={riskLevel} metrics={counts} />
-        </section>
+        {/* Bento Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* Top Left: Risk Score */}
+          <section className="lg:col-span-4">
+            <RiskScoreCard level={riskLevel} metrics={counts} />
+          </section>
 
-        {/* Charts */}
-        <section className="glass-panel p-6 rounded-3xl glow-border">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="h-8 w-2 rounded-full bg-primary-500"></div>
-            <h3 className="text-xl font-bold text-white">
-              Metrics Analysis Dashboard
-            </h3>
-          </div>
-          <BiasCharts analysisResults={analysis} />
-        </section>
+          {/* Top Right & Middle: Charts */}
+          <section className="lg:col-span-8 glass-panel p-5 rounded-2xl glow-border">
+            <div className="mb-4 flex items-center gap-2">
+              <div className="h-4 w-1 rounded-sm bg-primary-500"></div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-widest">
+                Metrics Analysis
+              </h3>
+            </div>
+            <div className="max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+              <BiasCharts analysisResults={analysis} />
+            </div>
+          </section>
 
-        {/* Oversight Form */}
-        <section className="grid md:grid-cols-2 gap-8">
-          <div className="glass-panel p-6 rounded-3xl">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="h-8 w-2 rounded-full bg-purple-500"></div>
-              <h3 className="text-xl font-bold text-white">
+          {/* Bottom Left: Oversight Form */}
+          <section className="lg:col-span-5 glass-panel p-5 rounded-2xl">
+            <div className="mb-4 flex items-center gap-2">
+              <div className="h-4 w-1 rounded-sm bg-purple-500"></div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-widest">
                 Human Oversight
               </h3>
             </div>
             <OversightForm sessionId={selectedSessionId} />
-          </div>
+          </section>
           
-          {/* Metadata info */}
-          <div className="glass-panel p-6 rounded-3xl flex flex-col justify-center">
-            <div className="text-center p-6 border border-white/5 rounded-2xl bg-dark-900/50">
-              <div className="inline-flex items-center justify-center p-3 rounded-full bg-primary-500/10 text-primary-400 mb-4">
-                <AlertCircle className="w-8 h-8" />
-              </div>
-              <h4 className="text-lg font-semibold text-white mb-2">Compliance Ready</h4>
-              <p className="text-sm text-dark-400 mb-6">
-                Fill out the human oversight form to generate a regulation-ready audit report. This guarantees accountability per {regulation?.toUpperCase() || 'compliance'} standards.
-              </p>
-            </div>
-          </div>
-        </section>
+          {/* Bottom Right: Metadata/Info */}
+          <section className="lg:col-span-7 glass-panel p-5 rounded-2xl flex flex-col justify-center relative overflow-hidden">
+             {/* Subtle graphic background */}
+             <div className="absolute -right-20 -bottom-20 opacity-5 pointer-events-none">
+               <Fingerprint className="w-96 h-96" />
+             </div>
+             <div className="relative z-10 max-w-md">
+                <div className="inline-flex items-center justify-center p-2 rounded-lg bg-dark-800 border border-white/5 text-primary-500 mb-3">
+                  <AlertCircle className="w-5 h-5" />
+                </div>
+                <h4 className="text-sm font-bold text-white mb-2 uppercase tracking-widest">Compliance Status</h4>
+                <p className="text-sm text-dark-300 leading-relaxed text-balance">
+                  This audit is generated under the <span className="text-white font-semibold">{regulation?.toUpperCase() || 'STANDARD'}</span> framework. 
+                  Complete the human oversight log to finalize the audit and enable the generation of a legally compliant PDF report for external review.
+                </p>
+             </div>
+          </section>
+
+        </div>
       </div>
     </main>
   );

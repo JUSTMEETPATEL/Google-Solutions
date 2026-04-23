@@ -12,15 +12,14 @@ export function FileUpload() {
   const [datasetFile, setDatasetFile] = useState<File | null>(null);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const { setSelectedSession, setCurrentScanResult } = useAppStore();
 
   const onDropModel = useCallback((files: File[]) => {
-    if (files[0]) { setModelFile(files[0]); setScanResult(null); }
+    if (files[0]) { setModelFile(files[0]); }
   }, []);
 
   const onDropDataset = useCallback((files: File[]) => {
-    if (files[0]) { setDatasetFile(files[0]); setScanResult(null); }
+    if (files[0]) { setDatasetFile(files[0]); }
   }, []);
 
   const modelDropzone = useDropzone({
@@ -39,10 +38,8 @@ export function FileUpload() {
     if (!modelFile || !datasetFile) return;
     setScanning(true);
     setError(null);
-    setScanResult(null);
     try {
       const result = await runScan(modelFile, datasetFile);
-      setScanResult(result);
       setCurrentScanResult(result);
       if (result.session_id) {
         setSelectedSession(result.session_id);
@@ -55,114 +52,98 @@ export function FileUpload() {
   };
 
   const getDropzoneStyle = (isDragActive: boolean, hasFile: boolean) => {
-    if (isDragActive) return "border-primary-500 bg-primary-500/10 text-primary-400";
-    if (hasFile) return "border-emerald-500 bg-emerald-500/5 text-emerald-400 border-solid";
-    return "border-white/10 hover:border-white/30 hover:bg-white/5 text-dark-400 border-dashed";
+    if (isDragActive) return "border-primary-500 bg-primary-500/10 shadow-[0_0_30px_rgba(6,182,212,0.3)] scale-105";
+    if (hasFile) return "border-success-500/50 bg-success-500/5 shadow-[0_0_20px_rgba(5,150,105,0.1)]";
+    return "border-white/10 bg-dark-900/30 hover:bg-dark-800/50 hover:border-white/20 border-dashed";
   };
 
-  const riskLevel = scanResult?.analysis_results?.overall_risk_level;
-  const riskColor = riskLevel === 'high' ? 'text-red-500' : riskLevel === 'medium' ? 'text-yellow-500' : 'text-emerald-500';
-
   return (
-    <div className="w-full max-w-2xl mx-auto glass-panel p-8 md:p-12 rounded-[2rem] shadow-2xl relative overflow-hidden animate-in fade-in zoom-in-95 duration-500">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-[100px] -z-10" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-[100px] -z-10" />
-      
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center justify-center p-3 bg-white/5 rounded-2xl mb-4 shadow-inner border border-white/5">
-          <ShieldCheck className="w-8 h-8 text-primary-400" />
+    <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[70vh]">
+      <div className="text-center mb-10 animate-in slide-in-from-top-8 fade-in duration-700">
+        <div className="inline-flex items-center justify-center p-4 bg-primary-500/10 rounded-2xl mb-6 shadow-[0_0_40px_rgba(6,182,212,0.2)] border border-primary-500/20">
+          <ShieldCheck className="w-10 h-10 text-primary-400" />
         </div>
-        <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
-          New Bias Analysis
-        </h2>
-        <p className="text-dark-400">Upload your model and test dataset to generate a compliance report.</p>
+        <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tighter mb-4 text-balance">
+          Initialize Bias Audit
+        </h1>
+        <p className="text-dark-300 text-lg max-w-xl mx-auto font-light">
+          Deploy your model architecture and validation dataset to begin the compliance analysis pipeline.
+        </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
-        {/* Model Upload */}
-        <div 
-          {...modelDropzone.getRootProps()} 
-          className={`flex flex-col items-center justify-center p-8 rounded-2xl border-2 transition-all cursor-pointer group ${getDropzoneStyle(modelDropzone.isDragActive, !!modelFile)}`}
-        >
-          <input {...modelDropzone.getInputProps()} />
-          <div className={`p-3 rounded-xl mb-4 transition-transform group-hover:scale-110 ${modelFile ? 'bg-emerald-500/20 text-emerald-400' : 'bg-dark-800 text-dark-300'}`}>
-            <Cpu className="w-6 h-6" />
+      <div className="w-full glass-panel p-8 md:p-10 rounded-[2rem] relative overflow-hidden animate-in zoom-in-95 fade-in duration-700 shadow-2xl border-white/5">
+        {/* Scanning Beam Animation Effect */}
+        {scanning && (
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            <div className="w-full h-1 bg-primary-500/50 shadow-[0_0_20px_rgba(6,182,212,1)] absolute animate-[scan_2s_ease-in-out_infinite]" />
           </div>
-          <div className={`text-sm font-semibold mb-1 text-center ${modelFile ? 'text-emerald-100' : 'text-white'}`}>
-            {modelFile ? modelFile.name : 'Drop model file'}
-          </div>
-          <div className="text-[11px] font-medium opacity-60">.pkl, .joblib, .onnx</div>
-        </div>
-
-        {/* Dataset Upload */}
-        <div 
-          {...datasetDropzone.getRootProps()} 
-          className={`flex flex-col items-center justify-center p-8 rounded-2xl border-2 transition-all cursor-pointer group ${getDropzoneStyle(datasetDropzone.isDragActive, !!datasetFile)}`}
-        >
-          <input {...datasetDropzone.getInputProps()} />
-          <div className={`p-3 rounded-xl mb-4 transition-transform group-hover:scale-110 ${datasetFile ? 'bg-emerald-500/20 text-emerald-400' : 'bg-dark-800 text-dark-300'}`}>
-            <FileJson className="w-6 h-6" />
-          </div>
-          <div className={`text-sm font-semibold mb-1 text-center ${datasetFile ? 'text-emerald-100' : 'text-white'}`}>
-            {datasetFile ? datasetFile.name : 'Drop dataset file'}
-          </div>
-          <div className="text-[11px] font-medium opacity-60">.csv, .parquet, .json</div>
-        </div>
-      </div>
-
-      <button
-        onClick={handleScan}
-        disabled={!modelFile || !datasetFile || scanning}
-        className={`w-full py-4 px-6 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
-          modelFile && datasetFile && !scanning
-            ? 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 hover:-translate-y-0.5' 
-            : 'bg-dark-800 text-dark-500 cursor-not-allowed border border-white/5'
-        }`}
-      >
-        {scanning ? (
-          <>
-            <Loader2 className="w-5 h-5 animate-spin" />
-            Analyzing bias...
-          </>
-        ) : (
-          <>
-            <UploadCloud className="w-5 h-5" />
-            Run Bias Analysis
-          </>
         )}
-      </button>
 
-      {error && (
-        <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm font-medium">{error}</p>
-        </div>
-      )}
+        <div className="relative z-10 grid md:grid-cols-2 gap-8 mb-8">
+          {/* Model Upload */}
+          <div 
+            {...modelDropzone.getRootProps()} 
+            className={`flex flex-col items-center justify-center p-10 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${getDropzoneStyle(modelDropzone.isDragActive, !!modelFile)}`}
+          >
+            <input {...modelDropzone.getInputProps()} />
+            <div className={`p-4 rounded-xl mb-6 transition-transform duration-500 group-hover:-translate-y-2 ${modelFile ? 'bg-success-500/20 text-success-400' : 'bg-dark-800 text-dark-300 shadow-inner border border-white/5'}`}>
+              <Cpu className="w-8 h-8" />
+            </div>
+            <div className={`text-lg font-bold mb-2 text-center transition-colors ${modelFile ? 'text-success-100' : 'text-white'}`}>
+              {modelFile ? modelFile.name : 'Drop Model Weights'}
+            </div>
+            <div className="text-xs font-mono text-dark-400 tracking-widest uppercase">.pkl • .joblib • .onnx</div>
+          </div>
 
-      {scanResult && (
-        <div className="mt-6 p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl" />
-          <div className="relative z-10">
-            <p className="flex items-center gap-2 text-emerald-400 text-sm font-bold mb-3">
-              <ShieldCheck className="w-5 h-5" />
-              Bias analysis complete
-            </p>
-            <p className="text-emerald-100/70 text-xs mb-1">
-              Model: <span className="font-semibold text-emerald-100">{scanResult.model_name || modelFile?.name}</span>
-            </p>
-            {riskLevel && (
-              <p className={`text-xs font-bold uppercase tracking-wide mt-2 ${riskColor}`}>
-                Risk Level: {riskLevel}
-              </p>
-            )}
-            {scanResult.analysis_results?.protected_attributes && (
-              <p className="text-emerald-100/50 text-[11px] mt-3">
-                Analyzed attributes: {scanResult.analysis_results.protected_attributes.join(', ')}
-              </p>
-            )}
+          {/* Dataset Upload */}
+          <div 
+            {...datasetDropzone.getRootProps()} 
+            className={`flex flex-col items-center justify-center p-10 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${getDropzoneStyle(datasetDropzone.isDragActive, !!datasetFile)}`}
+          >
+            <input {...datasetDropzone.getInputProps()} />
+            <div className={`p-4 rounded-xl mb-6 transition-transform duration-500 group-hover:-translate-y-2 ${datasetFile ? 'bg-success-500/20 text-success-400' : 'bg-dark-800 text-dark-300 shadow-inner border border-white/5'}`}>
+              <FileJson className="w-8 h-8" />
+            </div>
+            <div className={`text-lg font-bold mb-2 text-center transition-colors ${datasetFile ? 'text-success-100' : 'text-white'}`}>
+              {datasetFile ? datasetFile.name : 'Drop Validation Data'}
+            </div>
+            <div className="text-xs font-mono text-dark-400 tracking-widest uppercase">.csv • .json • .parquet</div>
           </div>
         </div>
-      )}
+
+        <button
+          onClick={handleScan}
+          disabled={!modelFile || !datasetFile || scanning}
+          className={`w-full py-5 rounded-xl font-black text-sm uppercase tracking-[0.2em] transition-all duration-500 flex items-center justify-center gap-3 relative overflow-hidden group ${
+            modelFile && datasetFile && !scanning
+              ? 'bg-white text-dark-950 hover:bg-primary-50 shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:shadow-[0_0_40px_rgba(6,182,212,0.4)] hover:scale-[1.02]' 
+              : 'bg-dark-900 text-dark-600 cursor-not-allowed border border-white/5'
+          }`}
+        >
+          {modelFile && datasetFile && !scanning && (
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-primary-500/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+          )}
+          
+          {scanning ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Initializing Pipeline...
+            </>
+          ) : (
+            <>
+              <UploadCloud className="w-5 h-5" />
+              Execute Analysis
+            </>
+          )}
+        </button>
+
+        {error && (
+          <div className="mt-6 p-4 bg-danger-500/10 border border-danger-500/30 rounded-xl flex items-center gap-3 text-danger-400 animate-in slide-in-from-top-2">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <p className="text-sm font-bold tracking-wide">{error}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
