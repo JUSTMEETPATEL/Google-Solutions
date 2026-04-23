@@ -9,6 +9,7 @@ import { PDFExport } from './PDFExport';
 import { FileUpload } from './FileUpload';
 import { useAppStore } from '../store/appStore';
 import { fetchSession } from '../api/client';
+import { Loader2, AlertCircle, Fingerprint } from 'lucide-react';
 
 export function Dashboard() {
   const { selectedSessionId, currentScanResult, regulation, setRegulation } = useAppStore();
@@ -16,21 +17,17 @@ export function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(false);
 
-  // If we have a scan result in the store, use it directly.
-  // Only fetch from API for sessions loaded from sidebar (persisted sessions).
   useEffect(() => {
     if (!selectedSessionId) {
       setFetchedSession(null);
       setFetchError(false);
       return;
     }
-    // If the current scan result matches this session, no need to fetch
     if (currentScanResult?.session_id === selectedSessionId) {
       setFetchedSession(null);
       setFetchError(false);
       return;
     }
-    // Try fetching from the API (for persisted sessions)
     setLoading(true);
     setFetchError(false);
     fetchSession(selectedSessionId)
@@ -39,10 +36,9 @@ export function Dashboard() {
       .finally(() => setLoading(false));
   }, [selectedSessionId, currentScanResult]);
 
-  // No session selected — show upload view
   if (!selectedSessionId) {
     return (
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <main className="flex-1 flex flex-col items-center justify-center p-6 relative z-0">
         <FileUpload />
       </main>
     );
@@ -50,27 +46,28 @@ export function Dashboard() {
 
   if (loading) {
     return (
-      <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#94a3b8', fontSize: 16 }}>Loading session...</p>
+      <main className="flex-1 flex flex-col items-center justify-center relative z-0">
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin mb-4" />
+        <p className="text-dark-400 text-sm font-medium animate-pulse tracking-widest uppercase">Loading Audit Data...</p>
       </main>
     );
   }
 
-  // Determine the session data source: store scan result or fetched session
-  const session = currentScanResult?.session_id === selectedSessionId
-    ? currentScanResult
-    : fetchedSession;
+  const session = currentScanResult?.session_id === selectedSessionId ? currentScanResult : fetchedSession;
 
   if (!session) {
     if (fetchError) {
       return (
-        <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ color: '#ef4444', fontSize: 14 }}>Failed to load session data.</p>
+        <main className="flex-1 flex flex-col items-center justify-center relative z-0">
+          <div className="glass-panel p-6 rounded-2xl flex flex-col items-center text-center max-w-sm">
+            <AlertCircle className="w-10 h-10 text-danger-500 mb-3" />
+            <p className="text-danger-500 text-sm font-bold uppercase tracking-wider">Failed to load session</p>
+          </div>
         </main>
       );
     }
     return (
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <main className="flex-1 flex flex-col items-center justify-center p-6 relative z-0">
         <FileUpload />
       </main>
     );
@@ -79,7 +76,6 @@ export function Dashboard() {
   const analysis = session.analysis_results || {};
   const riskLevel = analysis.overall_risk_level || 'unknown';
 
-  // Count pass/warning/fail
   const counts = { pass: 0, warning: 0, fail: 0 };
   for (const attr of Object.values(analysis.results || {})) {
     for (const m of Object.values((attr as any)?.metrics || {})) {
@@ -91,39 +87,96 @@ export function Dashboard() {
   }
 
   return (
-    <main style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#f1f5f9' }}>
-            {session.model_name || 'Bias Analysis'}
-          </h2>
-          <p style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-            Session: {selectedSessionId}
-          </p>
+    <main className="flex-1 overflow-y-auto relative z-0 p-6">
+      <div className="max-w-[1400px] mx-auto animate-in fade-in zoom-in-95 duration-500 flex flex-col gap-6">
+        
+        {/* Header Bar */}
+        <header className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 pb-4 border-b border-white/5">
+          <div>
+            <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+              {session.model_name || 'Audit Report'}
+            </h2>
+            <div className="flex items-center gap-3 mt-2">
+              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-dark-900 text-dark-300 text-[10px] font-bold font-mono border border-white/5 tracking-widest uppercase">
+                <Fingerprint className="w-3 h-3" />
+                {selectedSessionId.substring(0, 12)}
+              </span>
+              {session.created_at && (
+                <span className="text-xs text-dark-400 font-medium">
+                  {new Date(session.created_at).toLocaleString()}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <RegulationSelector value={regulation} onChange={setRegulation} />
+            <PDFExport sessionId={selectedSessionId} />
+          </div>
+        </header>
+
+        {/* Bento Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* Left Column: Risk & Oversight (3 cols) */}
+          <div className="lg:col-span-3 flex flex-col gap-6">
+            {/* Risk Score */}
+            <section>
+              <RiskScoreCard level={riskLevel} metrics={counts} />
+            </section>
+
+            {/* Oversight Form */}
+            <section className="glass-panel p-6 rounded-2xl flex-1">
+              <div className="mb-4 flex items-center gap-2">
+                <div className="h-4 w-1 rounded-sm bg-purple-500"></div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-widest">
+                  Human Oversight
+                </h3>
+              </div>
+              <OversightForm sessionId={selectedSessionId} />
+            </section>
+          </div>
+
+          {/* Middle Column: Charts (6 cols) */}
+          <div className="lg:col-span-6 flex flex-col">
+            <section className="glass-panel p-6 rounded-2xl glow-border flex-1 h-full">
+              <div className="mb-6 flex items-center gap-2">
+                <div className="h-4 w-1 rounded-sm bg-primary-500"></div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-widest">
+                  Metrics Analysis
+                </h3>
+              </div>
+              <div className="pr-2">
+                <BiasCharts analysisResults={analysis} />
+              </div>
+            </section>
+          </div>
+
+          {/* Right Column: Metadata / Compliance Status (3 cols) */}
+          <div className="lg:col-span-3 flex flex-col">
+            <section className="glass-panel p-6 rounded-2xl relative overflow-hidden flex-1 flex flex-col justify-center">
+               <div className="absolute -right-12 -bottom-12 opacity-5 pointer-events-none">
+                 <Fingerprint className="w-64 h-64 text-primary-500" />
+               </div>
+               <div className="relative z-10">
+                  <div className="inline-flex items-center justify-center p-3 rounded-xl bg-dark-950/50 border border-white/5 mb-4 shadow-inner">
+                    <AlertCircle className="w-6 h-6 text-primary-500" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white mb-3 uppercase tracking-widest">
+                    Compliance Status
+                  </h4>
+                  <p className="text-sm text-dark-300 leading-relaxed text-balance mb-6">
+                    Audit generated under <span className="text-white font-semibold">{regulation?.toUpperCase() || 'STANDARD'}</span>. Complete oversight to unlock PDF.
+                  </p>
+
+                  <div className="pt-4 border-t border-white/10 mt-auto">
+                     <p className="text-[10px] uppercase tracking-widest text-dark-500 font-bold mb-1">Session ID</p>
+                     <p className="text-xs font-mono text-dark-400 break-all">{selectedSessionId}</p>
+                  </div>
+               </div>
+            </section>
+          </div>
+
         </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <RegulationSelector value={regulation} onChange={setRegulation} />
-          <PDFExport sessionId={selectedSessionId} />
-        </div>
-      </div>
-
-      {/* Risk Card */}
-      <div style={{ marginBottom: 24 }}>
-        <RiskScoreCard level={riskLevel} metrics={counts} />
-      </div>
-
-      {/* Charts */}
-      <div style={{ marginBottom: 24 }}>
-        <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9', marginBottom: 12 }}>
-          Bias Dashboard
-        </h3>
-        <BiasCharts analysisResults={analysis} />
-      </div>
-
-      {/* Oversight Form */}
-      <div style={{ maxWidth: 500, marginTop: 24 }}>
-        <OversightForm sessionId={selectedSessionId} />
       </div>
     </main>
   );
