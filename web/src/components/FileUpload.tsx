@@ -3,7 +3,6 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { runScan } from '../api/client';
-import type { ScanResult } from '../api/client';
 import { useAppStore } from '../store/appStore';
 import { UploadCloud, FileJson, Cpu, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
 
