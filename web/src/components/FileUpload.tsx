@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { runScan } from '../api/client';
 import { useAppStore } from '../store/appStore';
-import { UploadCloud, FileJson, Cpu, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
+import { UploadCloud, FileJson, Cpu, AlertCircle, Loader2, Network } from 'lucide-react';
 
 export function FileUpload() {
   const [modelFile, setModelFile] = useState<File | null>(null);
@@ -50,82 +50,74 @@ export function FileUpload() {
     }
   };
 
-  const getDropzoneStyle = (isDragActive: boolean, hasFile: boolean) => {
-    if (isDragActive) return "border-primary-500 bg-primary-500/10 shadow-[0_0_30px_rgba(6,182,212,0.3)] scale-105";
-    if (hasFile) return "border-success-500/50 bg-success-500/5 shadow-[0_0_20px_rgba(5,150,105,0.1)]";
-    return "border-white/10 bg-dark-900/30 hover:bg-dark-800/50 hover:border-white/20 border-dashed";
-  };
-
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[70vh]">
-      <div className="text-center mb-10 animate-in slide-in-from-top-8 fade-in duration-700">
-        <div className="inline-flex items-center justify-center p-4 bg-primary-500/10 rounded-2xl mb-6 shadow-[0_0_40px_rgba(6,182,212,0.2)] border border-primary-500/20">
-          <ShieldCheck className="w-10 h-10 text-primary-400" />
-        </div>
-        <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tighter mb-4 text-balance">
-          Initialize Bias Audit
-        </h1>
-        <p className="text-dark-300 text-lg max-w-xl mx-auto font-light">
-          Deploy your model architecture and validation dataset to begin the compliance analysis pipeline.
-        </p>
-      </div>
+    <div className="w-full max-w-4xl mx-auto my-16 animate-in fade-in zoom-in-95 duration-700">
+      <div className="glass-panel p-8 md:p-10 rounded-3xl relative overflow-hidden group/upload border border-white/5 shadow-2xl">
+        {/* Subtle background glow */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-success-500/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
 
-      <div className="w-full glass-panel p-8 md:p-10 rounded-[2rem] relative overflow-hidden animate-in zoom-in-95 fade-in duration-700 shadow-2xl border-white/5">
-        {/* Scanning Beam Animation Effect */}
-        {scanning && (
-          <div className="absolute inset-0 z-0 pointer-events-none">
-            <div className="w-full h-1 bg-primary-500/50 shadow-[0_0_20px_rgba(6,182,212,1)] absolute animate-[scan_2s_ease-in-out_infinite]" />
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-dark-950/50 border border-white/10 mb-4 shadow-inner">
+            <Network className="w-8 h-8 text-white" />
           </div>
-        )}
+          <h2 className="text-3xl font-extrabold text-white tracking-tight mb-2">Configure Analysis Pipeline</h2>
+          <p className="text-dark-400 font-medium">Upload your model weights and validation dataset to initialize the audit.</p>
+        </div>
 
-        <div className="relative z-10 grid md:grid-cols-2 gap-8 mb-8">
+        <div className="grid md:grid-cols-2 gap-6 mb-8 relative z-10">
           {/* Model Upload */}
           <div 
             {...modelDropzone.getRootProps()} 
-            className={`flex flex-col items-center justify-center p-10 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${getDropzoneStyle(modelDropzone.isDragActive, !!modelFile)}`}
+            className={`flex flex-col items-center justify-center p-8 rounded-2xl border-2 transition-all duration-300 cursor-pointer ${
+              modelDropzone.isDragActive ? 'border-primary-500 bg-primary-500/10 shadow-[0_0_30px_rgba(6,182,212,0.2)] scale-[1.02]' : 
+              modelFile ? 'border-success-500/50 bg-success-500/5' : 
+              'border-white/10 bg-dark-950/40 hover:border-white/30 hover:bg-dark-900'
+            }`}
           >
             <input {...modelDropzone.getInputProps()} />
-            <div className={`p-4 rounded-xl mb-6 transition-transform duration-500 group-hover:-translate-y-2 ${modelFile ? 'bg-success-500/20 text-success-400' : 'bg-dark-800 text-dark-300 shadow-inner border border-white/5'}`}>
+            <div className={`p-4 rounded-xl mb-4 transition-transform duration-300 ${modelFile ? 'bg-success-500/20 text-success-400 scale-110' : 'bg-dark-800 text-dark-400 group-hover/upload:text-white'}`}>
               <Cpu className="w-8 h-8" />
             </div>
-            <div className={`text-lg font-bold mb-2 text-center transition-colors ${modelFile ? 'text-success-100' : 'text-white'}`}>
-              {modelFile ? modelFile.name : 'Drop Model Weights'}
-            </div>
-            <div className="text-xs font-mono text-dark-400 tracking-widest uppercase">.pkl • .joblib • .onnx</div>
+            <p className={`text-lg font-bold truncate max-w-[200px] mb-1 ${modelFile ? 'text-success-100' : 'text-white'}`}>
+              {modelFile ? modelFile.name : 'Drop Model'}
+            </p>
+            <p className="text-xs font-mono text-dark-500 tracking-widest uppercase">.pkl, .joblib, .onnx</p>
           </div>
 
           {/* Dataset Upload */}
           <div 
             {...datasetDropzone.getRootProps()} 
-            className={`flex flex-col items-center justify-center p-10 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${getDropzoneStyle(datasetDropzone.isDragActive, !!datasetFile)}`}
+            className={`flex flex-col items-center justify-center p-8 rounded-2xl border-2 transition-all duration-300 cursor-pointer ${
+              datasetDropzone.isDragActive ? 'border-primary-500 bg-primary-500/10 shadow-[0_0_30px_rgba(6,182,212,0.2)] scale-[1.02]' : 
+              datasetFile ? 'border-success-500/50 bg-success-500/5' : 
+              'border-white/10 bg-dark-950/40 hover:border-white/30 hover:bg-dark-900'
+            }`}
           >
             <input {...datasetDropzone.getInputProps()} />
-            <div className={`p-4 rounded-xl mb-6 transition-transform duration-500 group-hover:-translate-y-2 ${datasetFile ? 'bg-success-500/20 text-success-400' : 'bg-dark-800 text-dark-300 shadow-inner border border-white/5'}`}>
+            <div className={`p-4 rounded-xl mb-4 transition-transform duration-300 ${datasetFile ? 'bg-success-500/20 text-success-400 scale-110' : 'bg-dark-800 text-dark-400 group-hover/upload:text-white'}`}>
               <FileJson className="w-8 h-8" />
             </div>
-            <div className={`text-lg font-bold mb-2 text-center transition-colors ${datasetFile ? 'text-success-100' : 'text-white'}`}>
-              {datasetFile ? datasetFile.name : 'Drop Validation Data'}
-            </div>
-            <div className="text-xs font-mono text-dark-400 tracking-widest uppercase">.csv • .json • .parquet</div>
+            <p className={`text-lg font-bold truncate max-w-[200px] mb-1 ${datasetFile ? 'text-success-100' : 'text-white'}`}>
+              {datasetFile ? datasetFile.name : 'Drop Dataset'}
+            </p>
+            <p className="text-xs font-mono text-dark-500 tracking-widest uppercase">.csv, .json, .parquet</p>
           </div>
         </div>
 
+        {/* Execute Button */}
         <button
           onClick={handleScan}
           disabled={!modelFile || !datasetFile || scanning}
-          className={`w-full py-5 rounded-xl font-black text-sm uppercase tracking-[0.2em] transition-all duration-500 flex items-center justify-center gap-3 relative overflow-hidden group ${
+          className={`w-full py-4 rounded-xl font-bold text-[13px] uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-3 border ${
             modelFile && datasetFile && !scanning
-              ? 'bg-white text-dark-950 hover:bg-primary-50 shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:shadow-[0_0_40px_rgba(6,182,212,0.4)] hover:scale-[1.02]' 
-              : 'bg-dark-900 text-dark-600 cursor-not-allowed border border-white/5'
+              ? 'bg-white text-black hover:bg-dark-100 hover:scale-[1.01] shadow-[0_0_20px_rgba(255,255,255,0.1)] border-transparent' 
+              : 'bg-dark-950/50 text-dark-600 border-white/5 cursor-not-allowed'
           }`}
         >
-          {modelFile && datasetFile && !scanning && (
-            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-primary-500/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-          )}
-          
           {scanning ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin text-primary-500" />
               Initializing Pipeline...
             </>
           ) : (
@@ -135,11 +127,18 @@ export function FileUpload() {
             </>
           )}
         </button>
+        
+        {/* Progress Bar (Scanning) */}
+        {scanning && (
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-dark-800 overflow-hidden">
+            <div className="absolute top-0 bottom-0 left-0 w-1/3 bg-primary-500 animate-[scan_1.5s_ease-in-out_infinite]" />
+          </div>
+        )}
 
         {error && (
-          <div className="mt-6 p-4 bg-danger-500/10 border border-danger-500/30 rounded-xl flex items-center gap-3 text-danger-400 animate-in slide-in-from-top-2">
+          <div className="mt-6 p-4 bg-danger-500/10 border border-danger-500/20 rounded-xl flex items-center gap-3 text-danger-400">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <p className="text-sm font-bold tracking-wide">{error}</p>
+            <p className="text-sm font-semibold">{error}</p>
           </div>
         )}
       </div>

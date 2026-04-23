@@ -10,17 +10,17 @@
   --color-primary-600: #0891b2;
   --color-primary-700: #0e7490;
   
-  --color-dark-50: #f4f4f5;
-  --color-dark-100: #e4e4e7;
-  --color-dark-200: #d4d4d8;
+  --color-dark-50: #ffffff;
+  --color-dark-100: #f4f4f5;
+  --color-dark-200: #e4e4e7;
   --color-dark-300: #a1a1aa; /* Silver secondary text */
   --color-dark-400: #71717a;
   --color-dark-500: #52525b;
   --color-dark-600: #3f3f46;
   --color-dark-700: #27272a;
-  --color-dark-800: #18181b;
-  --color-dark-900: #0f0f11;
-  --color-dark-950: #09090b; /* True Obsidian */
+  --color-dark-800: #111111;
+  --color-dark-900: #0a0a0a;
+  --color-dark-950: #000000; /* Pure black */
   
   --color-danger-500: #e11d48; /* Crimson */
   --color-warning-500: #d97706; /* Amber */
@@ -29,13 +29,15 @@
 
 @layer base {
   body {
-    @apply bg-dark-950 text-dark-50 antialiased min-h-screen selection:bg-primary-500/30 selection:text-primary-100;
-    /* Noise texture + radial gradients for the background */
-    background-color: #09090b;
+    @apply bg-dark-950 text-dark-100 antialiased min-h-screen selection:bg-primary-500/30 selection:text-white;
+    background-color: #050505; /* Deeper black */
+    
+    /* Lively but subtle background hues */
     background-image: 
-      radial-gradient(circle at 15% 50%, rgba(6, 182, 212, 0.03), transparent 25%),
-      radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.02), transparent 25%),
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+      radial-gradient(circle at 0% 0%, rgba(6, 182, 212, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 100% 0%, rgba(139, 92, 246, 0.06) 0%, transparent 40%),
+      radial-gradient(circle at 50% 100%, rgba(5, 150, 105, 0.05) 0%, transparent 50%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
     background-attachment: fixed;
   }
 }
@@ -49,25 +51,23 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
 }
 
-/* Advanced True Glassmorphism */
+/* Linear/Vercel Style Glassmorphism - Enhanced Frosted Glass */
 .glass-panel {
-  @apply bg-dark-900/40 backdrop-blur-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.5)];
-  /* Top and Left highlighting to simulate physical glass edges */
+  @apply bg-dark-900/40 backdrop-blur-2xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-300;
   box-shadow: 
-    inset 1px 1px 0 0 rgba(255, 255, 255, 0.05),
-    inset -1px -1px 0 0 rgba(0, 0, 0, 0.5),
-    0 8px 32px 0 rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.03);
+    inset 0 1px 1px 0 rgba(255,255,255,0.15), 
+    inset 0 -1px 1px 0 rgba(0,0,0,0.5), 
+    0 10px 40px rgba(0,0,0,0.8);
 }
 
-/* Glow Border for high emphasis */
+/* Refined Glow Border */
 .glow-border {
   position: relative;
 }
@@ -77,7 +77,7 @@
   inset: -1px;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(255,255,255,0.02) 40%, rgba(255,255,255,0));
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.5), transparent 40%);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -90,10 +90,8 @@
 }
 
 @keyframes scan {
-  0% { top: 0; opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { top: 100%; opacity: 0; }
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 @keyframes shimmer {

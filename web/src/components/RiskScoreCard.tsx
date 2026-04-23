@@ -18,40 +18,45 @@ export function RiskScoreCard({ level, metrics }: RiskScoreCardProps) {
   const Icon = config.icon;
 
   return (
-    <div className={`h-full rounded-2xl border p-5 flex flex-col justify-between backdrop-blur-md shadow-lg ${config.bg} relative overflow-hidden group`}>
-      {/* Decorative gradient orb */}
-      <div className={`absolute -right-10 -top-10 w-32 h-32 blur-[60px] rounded-full opacity-20 transition-opacity group-hover:opacity-40 ${config.bg.split(' ')[0]}`} />
+    <div className={`h-full glass-panel rounded-xl p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${level.toLowerCase() !== 'unknown' ? `border-t-2 border-t-[${config.color.replace('text-', 'var(--color-')}]` : ''}`}>
       
-      <div className="flex items-start justify-between relative z-10 mb-4">
+      <div className="flex items-start justify-between relative z-10 mb-6">
         <div>
-          <div className="text-[10px] font-bold text-dark-400 uppercase tracking-widest mb-0.5">
+          <div className="text-[10px] font-bold text-dark-400 uppercase tracking-widest mb-1 flex items-center gap-2">
+            <span className={`w-1.5 h-1.5 rounded-full ${config.bg.split(' ')[0]}`}></span>
             Overall Assessment
           </div>
-          <div className={`text-3xl font-black tracking-tighter ${config.textClass}`}>
-            {level.toUpperCase()}
+          <div className={`text-2xl font-bold tracking-tight ${config.textClass}`}>
+            {level.toUpperCase()} RISK
           </div>
         </div>
-        <div className={`p-2.5 rounded-xl ${config.bg.split(' ')[0]} bg-opacity-20`}>
-          <Icon className={`w-8 h-8 ${config.color}`} />
+        <div className={`p-2 rounded-lg ${config.bg.split(' ')[0]} bg-opacity-10 border border-white/5`}>
+          <Icon className={`w-6 h-6 ${config.color}`} />
         </div>
       </div>
 
       {metrics && (
         <div className="flex items-center gap-3 relative z-10 mt-auto pt-4 border-t border-white/5">
-          <div className="flex-1 flex flex-col items-center p-2 rounded-lg bg-dark-950/40 border border-white/5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-success-500 mb-1" />
-            <span className="text-xs font-bold text-white font-mono">{metrics.pass}</span>
-            <span className="text-[9px] uppercase tracking-wider text-dark-400">Pass</span>
+          <div className="flex-1 flex flex-col items-start p-3 rounded-lg bg-dark-950/50 border border-white/5 transition-colors hover:bg-dark-900">
+            <div className="flex items-center gap-1.5 mb-1 text-[10px] uppercase tracking-widest text-dark-400">
+              <CheckCircle2 className="w-3 h-3 text-success-500" />
+              Pass
+            </div>
+            <span className="text-sm font-semibold text-white font-mono">{metrics.pass}</span>
           </div>
-          <div className="flex-1 flex flex-col items-center p-2 rounded-lg bg-dark-950/40 border border-white/5">
-            <AlertTriangle className="w-3.5 h-3.5 text-warning-500 mb-1" />
-            <span className="text-xs font-bold text-white font-mono">{metrics.warning}</span>
-            <span className="text-[9px] uppercase tracking-wider text-dark-400">Warn</span>
+          <div className="flex-1 flex flex-col items-start p-3 rounded-lg bg-dark-950/50 border border-white/5 transition-colors hover:bg-dark-900">
+            <div className="flex items-center gap-1.5 mb-1 text-[10px] uppercase tracking-widest text-dark-400">
+              <AlertTriangle className="w-3 h-3 text-warning-500" />
+              Warn
+            </div>
+            <span className="text-sm font-semibold text-white font-mono">{metrics.warning}</span>
           </div>
-          <div className="flex-1 flex flex-col items-center p-2 rounded-lg bg-dark-950/40 border border-white/5">
-            <AlertOctagon className="w-3.5 h-3.5 text-danger-500 mb-1" />
-            <span className="text-xs font-bold text-white font-mono">{metrics.fail}</span>
-            <span className="text-[9px] uppercase tracking-wider text-dark-400">Fail</span>
+          <div className="flex-1 flex flex-col items-start p-3 rounded-lg bg-dark-950/50 border border-white/5 transition-colors hover:bg-dark-900">
+            <div className="flex items-center gap-1.5 mb-1 text-[10px] uppercase tracking-widest text-dark-400">
+              <AlertOctagon className="w-3 h-3 text-danger-500" />
+              Fail
+            </div>
+            <span className="text-sm font-semibold text-white font-mono">{metrics.fail}</span>
           </div>
         </div>
       )}

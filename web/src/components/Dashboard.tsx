@@ -117,52 +117,55 @@ export function Dashboard() {
         {/* Bento Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* Top Left: Risk Score */}
-          <section className="lg:col-span-4">
-            <RiskScoreCard level={riskLevel} metrics={counts} />
-          </section>
+          {/* Left Column: Risk, Oversight, Meta */}
+          <div className="lg:col-span-4 flex flex-col gap-6">
+            {/* Risk Score */}
+            <section>
+              <RiskScoreCard level={riskLevel} metrics={counts} />
+            </section>
 
-          {/* Top Right & Middle: Charts */}
-          <section className="lg:col-span-8 glass-panel p-5 rounded-2xl glow-border">
-            <div className="mb-4 flex items-center gap-2">
-              <div className="h-4 w-1 rounded-sm bg-primary-500"></div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-widest">
-                Metrics Analysis
-              </h3>
-            </div>
-            <div className="max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-              <BiasCharts analysisResults={analysis} />
-            </div>
-          </section>
+            {/* Oversight Form */}
+            <section className="glass-panel p-6 rounded-2xl">
+              <div className="mb-4 flex items-center gap-2">
+                <div className="h-4 w-1 rounded-sm bg-purple-500"></div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-widest">
+                  Human Oversight
+                </h3>
+              </div>
+              <OversightForm sessionId={selectedSessionId} />
+            </section>
+            
+            {/* Metadata/Info */}
+            <section className="glass-panel p-5 rounded-2xl relative overflow-hidden mt-auto">
+               <div className="absolute -right-12 -bottom-12 opacity-5 pointer-events-none">
+                 <Fingerprint className="w-48 h-48" />
+               </div>
+               <div className="relative z-10">
+                  <h4 className="text-[10px] font-bold text-dark-400 mb-2 uppercase tracking-widest flex items-center gap-2">
+                    <AlertCircle className="w-3.5 h-3.5 text-primary-500" />
+                    Compliance Status
+                  </h4>
+                  <p className="text-xs text-dark-300 leading-relaxed text-balance">
+                    Audit generated under <span className="text-white font-semibold">{regulation?.toUpperCase() || 'STANDARD'}</span>. Complete oversight to unlock PDF.
+                  </p>
+               </div>
+            </section>
+          </div>
 
-          {/* Bottom Left: Oversight Form */}
-          <section className="lg:col-span-5 glass-panel p-5 rounded-2xl">
-            <div className="mb-4 flex items-center gap-2">
-              <div className="h-4 w-1 rounded-sm bg-purple-500"></div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-widest">
-                Human Oversight
-              </h3>
-            </div>
-            <OversightForm sessionId={selectedSessionId} />
-          </section>
-          
-          {/* Bottom Right: Metadata/Info */}
-          <section className="lg:col-span-7 glass-panel p-5 rounded-2xl flex flex-col justify-center relative overflow-hidden">
-             {/* Subtle graphic background */}
-             <div className="absolute -right-20 -bottom-20 opacity-5 pointer-events-none">
-               <Fingerprint className="w-96 h-96" />
-             </div>
-             <div className="relative z-10 max-w-md">
-                <div className="inline-flex items-center justify-center p-2 rounded-lg bg-dark-800 border border-white/5 text-primary-500 mb-3">
-                  <AlertCircle className="w-5 h-5" />
-                </div>
-                <h4 className="text-sm font-bold text-white mb-2 uppercase tracking-widest">Compliance Status</h4>
-                <p className="text-sm text-dark-300 leading-relaxed text-balance">
-                  This audit is generated under the <span className="text-white font-semibold">{regulation?.toUpperCase() || 'STANDARD'}</span> framework. 
-                  Complete the human oversight log to finalize the audit and enable the generation of a legally compliant PDF report for external review.
-                </p>
-             </div>
-          </section>
+          {/* Right Column: Charts */}
+          <div className="lg:col-span-8 flex flex-col">
+            <section className="glass-panel p-6 rounded-2xl glow-border flex-1 h-full">
+              <div className="mb-6 flex items-center gap-2">
+                <div className="h-4 w-1 rounded-sm bg-primary-500"></div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-widest">
+                  Metrics Analysis
+                </h3>
+              </div>
+              <div className="pr-2">
+                <BiasCharts analysisResults={analysis} />
+              </div>
+            </section>
+          </div>
 
         </div>
       </div>
