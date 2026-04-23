@@ -1,6 +1,9 @@
 """Scan endpoint — accepts model + dataset uploads and runs bias analysis.
 
 Uploads are streamed directly to disk to avoid memory spikes (D-04).
+Integrates intersectional analysis, statistical significance, SHAP
+feature attribution, plain-English explanations, and auto-recommendations.
+Persists results to the session database.
 """
 
 from __future__ import annotations
@@ -16,6 +19,11 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException, UploadFile
 
 from faircheck.analysis.engine import BiasAnalyzer
+from faircheck.analysis.explanations import generate_all_explanations
+from faircheck.analysis.feature_attribution import compute_feature_attribution
+from faircheck.analysis.intersectional import compute_intersectional_analysis
+from faircheck.analysis.recommend import recommend_mitigation
+from faircheck.analysis.significance import compute_all_confidence_intervals
 from faircheck.config import load_config
 from faircheck.ingestion.pipeline import IngestionPipeline
 
@@ -140,12 +148,83 @@ async def run_scan(
             y_prob=y_prob,
             feature_matrix=X,
         )
+        analysis_dict = analysis.to_dict()
+
+        # --- Plain-English explanations ---
+        explanations = generate_all_explanations(analysis_dict.get("results", {}))
+
+        # --- Intersectional analysis ---
+        intersectional = None
+        if len(sensitive_features) >= 2:
+            thresholds = config.get("metrics", {}).get("default_thresholds", {})
+            try:
+                intersectional = compute_intersectional_analysis(
+                    y_true=y_true,
+                    y_pred=y_pred,
+                    sensitive_features=sensitive_features,
+                    thresholds=thresholds,
+                )
+            except Exception as e:
+                logger.warning("Intersectional analysis failed: %s", e)
+
+        # --- Statistical significance (bootstrap CIs) ---
+        confidence_intervals = None
+        try:
+            thresholds = config.get("metrics", {}).get("default_thresholds", {})
+            confidence_intervals = compute_all_confidence_intervals(
+                y_true=y_true,
+                y_pred=y_pred,
+                sensitive_features=sensitive_features,
+                n_bootstrap=300,  # Reduced for speed
+                thresholds=thresholds,
+            )
+        except Exception as e:
+            logger.warning("Confidence interval computation failed: %s", e)
+
+        # --- Feature attribution ---
+        feature_attribution = None
+        try:
+            feature_attribution = compute_feature_attribution(
+                model=ingestion.model._model if hasattr(ingestion.model, '_model') else ingestion.model,
+                X=X,
+                y_true=y_true,
+                y_pred=y_pred,
+                sensitive_features=sensitive_features,
+                feature_names=ordered_features,
+                n_repeats=5,
+            )
+        except Exception as e:
+            logger.warning("Feature attribution failed: %s", e)
+
+        # --- Auto-recommend mitigation ---
+        recommendations = recommend_mitigation(analysis_dict)
+
+        # --- Persist to database ---
+        model_name = model.filename or "Unknown Model"
+        try:
+            _persist_session(
+                session_id=session_id,
+                model_name=model_name,
+                analysis_dict=analysis_dict,
+                explanations=explanations,
+                intersectional=intersectional,
+                confidence_intervals=confidence_intervals,
+                feature_attribution=feature_attribution,
+                recommendations=recommendations,
+            )
+        except Exception as e:
+            logger.warning("Session persistence failed: %s", e)
 
         return {
             "session_id": session_id,
             "status": "complete",
-            "model_name": model.filename or "Unknown Model",
-            "analysis_results": analysis.to_dict(),
+            "model_name": model_name,
+            "analysis_results": analysis_dict,
+            "explanations": explanations,
+            "intersectional_analysis": intersectional,
+            "confidence_intervals": confidence_intervals,
+            "feature_attribution": feature_attribution,
+            "recommendations": recommendations,
         }
 
     except HTTPException:
@@ -161,3 +240,46 @@ async def run_scan(
             except OSError:
                 pass
 
+
+def _persist_session(
+    session_id: str,
+    model_name: str,
+    analysis_dict: dict,
+    explanations: dict,
+    intersectional: dict | None,
+    confidence_intervals: dict | None,
+    feature_attribution: dict | None,
+    recommendations: list,
+) -> None:
+    """Save scan results to the SQLite database."""
+    from faircheck.api.db import SessionLocal, engine, Base
+    from faircheck.api.models import Session as SessionModel
+
+    # Ensure tables exist
+    Base.metadata.create_all(bind=engine)
+
+    db = SessionLocal()
+    try:
+        session_row = SessionModel(
+            id=session_id,
+            status="complete",
+            model_path=model_name,
+            dataset_path="uploaded",
+            risk_level=analysis_dict.get("overall_risk_level", "unknown"),
+            bias_metrics={
+                "analysis_results": analysis_dict,
+                "explanations": explanations,
+                "intersectional_analysis": intersectional,
+                "confidence_intervals": confidence_intervals,
+                "feature_attribution": feature_attribution,
+                "recommendations": recommendations,
+            },
+        )
+        db.add(session_row)
+        db.commit()
+        logger.info("Session %s persisted to database", session_id)
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
