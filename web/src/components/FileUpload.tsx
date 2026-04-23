@@ -71,15 +71,15 @@ export function FileUpload() {
             {...modelDropzone.getRootProps()} 
             className={`flex flex-col items-center justify-center p-8 rounded-2xl border-2 transition-all duration-300 cursor-pointer ${
               modelDropzone.isDragActive ? 'border-primary-500 bg-primary-500/10 shadow-[0_0_30px_rgba(6,182,212,0.2)] scale-[1.02]' : 
-              modelFile ? 'border-success-500/50 bg-success-500/5' : 
+              modelFile ? 'border-success-500 bg-success-500/10 shadow-[inset_0_0_20px_rgba(5,150,105,0.2),0_0_15px_rgba(5,150,105,0.2)]' : 
               'border-white/10 bg-dark-950/40 hover:border-white/30 hover:bg-dark-900'
             }`}
           >
             <input {...modelDropzone.getInputProps()} />
-            <div className={`p-4 rounded-xl mb-4 transition-transform duration-300 ${modelFile ? 'bg-success-500/20 text-success-400 scale-110' : 'bg-dark-800 text-dark-400 group-hover/upload:text-white'}`}>
+            <div className={`p-4 rounded-xl mb-4 transition-transform duration-300 ${modelFile ? 'bg-success-500/20 text-success-400 scale-110 shadow-[0_0_15px_rgba(5,150,105,0.4)]' : 'bg-dark-800 text-dark-400 group-hover/upload:text-white'}`}>
               <Cpu className="w-8 h-8" />
             </div>
-            <p className={`text-lg font-bold truncate max-w-[200px] mb-1 ${modelFile ? 'text-success-100' : 'text-white'}`}>
+            <p className={`text-lg font-bold truncate max-w-[200px] mb-1 transition-colors ${modelFile ? 'text-success-400' : 'text-white'}`}>
               {modelFile ? modelFile.name : 'Drop Model'}
             </p>
             <p className="text-xs font-mono text-dark-500 tracking-widest uppercase">.pkl, .joblib, .onnx</p>
@@ -90,15 +90,15 @@ export function FileUpload() {
             {...datasetDropzone.getRootProps()} 
             className={`flex flex-col items-center justify-center p-8 rounded-2xl border-2 transition-all duration-300 cursor-pointer ${
               datasetDropzone.isDragActive ? 'border-primary-500 bg-primary-500/10 shadow-[0_0_30px_rgba(6,182,212,0.2)] scale-[1.02]' : 
-              datasetFile ? 'border-success-500/50 bg-success-500/5' : 
+              datasetFile ? 'border-success-500 bg-success-500/10 shadow-[inset_0_0_20px_rgba(5,150,105,0.2),0_0_15px_rgba(5,150,105,0.2)]' : 
               'border-white/10 bg-dark-950/40 hover:border-white/30 hover:bg-dark-900'
             }`}
           >
             <input {...datasetDropzone.getInputProps()} />
-            <div className={`p-4 rounded-xl mb-4 transition-transform duration-300 ${datasetFile ? 'bg-success-500/20 text-success-400 scale-110' : 'bg-dark-800 text-dark-400 group-hover/upload:text-white'}`}>
+            <div className={`p-4 rounded-xl mb-4 transition-transform duration-300 ${datasetFile ? 'bg-success-500/20 text-success-400 scale-110 shadow-[0_0_15px_rgba(5,150,105,0.4)]' : 'bg-dark-800 text-dark-400 group-hover/upload:text-white'}`}>
               <FileJson className="w-8 h-8" />
             </div>
-            <p className={`text-lg font-bold truncate max-w-[200px] mb-1 ${datasetFile ? 'text-success-100' : 'text-white'}`}>
+            <p className={`text-lg font-bold truncate max-w-[200px] mb-1 transition-colors ${datasetFile ? 'text-success-400' : 'text-white'}`}>
               {datasetFile ? datasetFile.name : 'Drop Dataset'}
             </p>
             <p className="text-xs font-mono text-dark-500 tracking-widest uppercase">.csv, .json, .parquet</p>

@@ -117,15 +117,15 @@ export function Dashboard() {
         {/* Bento Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* Left Column: Risk, Oversight, Meta */}
-          <div className="lg:col-span-4 flex flex-col gap-6">
+          {/* Left Column: Risk & Oversight (3 cols) */}
+          <div className="lg:col-span-3 flex flex-col gap-6">
             {/* Risk Score */}
             <section>
               <RiskScoreCard level={riskLevel} metrics={counts} />
             </section>
 
             {/* Oversight Form */}
-            <section className="glass-panel p-6 rounded-2xl">
+            <section className="glass-panel p-6 rounded-2xl flex-1">
               <div className="mb-4 flex items-center gap-2">
                 <div className="h-4 w-1 rounded-sm bg-purple-500"></div>
                 <h3 className="text-sm font-bold text-white uppercase tracking-widest">
@@ -134,26 +134,10 @@ export function Dashboard() {
               </div>
               <OversightForm sessionId={selectedSessionId} />
             </section>
-            
-            {/* Metadata/Info */}
-            <section className="glass-panel p-5 rounded-2xl relative overflow-hidden mt-auto">
-               <div className="absolute -right-12 -bottom-12 opacity-5 pointer-events-none">
-                 <Fingerprint className="w-48 h-48" />
-               </div>
-               <div className="relative z-10">
-                  <h4 className="text-[10px] font-bold text-dark-400 mb-2 uppercase tracking-widest flex items-center gap-2">
-                    <AlertCircle className="w-3.5 h-3.5 text-primary-500" />
-                    Compliance Status
-                  </h4>
-                  <p className="text-xs text-dark-300 leading-relaxed text-balance">
-                    Audit generated under <span className="text-white font-semibold">{regulation?.toUpperCase() || 'STANDARD'}</span>. Complete oversight to unlock PDF.
-                  </p>
-               </div>
-            </section>
           </div>
 
-          {/* Right Column: Charts */}
-          <div className="lg:col-span-8 flex flex-col">
+          {/* Middle Column: Charts (6 cols) */}
+          <div className="lg:col-span-6 flex flex-col">
             <section className="glass-panel p-6 rounded-2xl glow-border flex-1 h-full">
               <div className="mb-6 flex items-center gap-2">
                 <div className="h-4 w-1 rounded-sm bg-primary-500"></div>
@@ -164,6 +148,31 @@ export function Dashboard() {
               <div className="pr-2">
                 <BiasCharts analysisResults={analysis} />
               </div>
+            </section>
+          </div>
+
+          {/* Right Column: Metadata / Compliance Status (3 cols) */}
+          <div className="lg:col-span-3 flex flex-col">
+            <section className="glass-panel p-6 rounded-2xl relative overflow-hidden flex-1 flex flex-col justify-center">
+               <div className="absolute -right-12 -bottom-12 opacity-5 pointer-events-none">
+                 <Fingerprint className="w-64 h-64 text-primary-500" />
+               </div>
+               <div className="relative z-10">
+                  <div className="inline-flex items-center justify-center p-3 rounded-xl bg-dark-950/50 border border-white/5 mb-4 shadow-inner">
+                    <AlertCircle className="w-6 h-6 text-primary-500" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white mb-3 uppercase tracking-widest">
+                    Compliance Status
+                  </h4>
+                  <p className="text-sm text-dark-300 leading-relaxed text-balance mb-6">
+                    Audit generated under <span className="text-white font-semibold">{regulation?.toUpperCase() || 'STANDARD'}</span>. Complete oversight to unlock PDF.
+                  </p>
+
+                  <div className="pt-4 border-t border-white/10 mt-auto">
+                     <p className="text-[10px] uppercase tracking-widest text-dark-500 font-bold mb-1">Session ID</p>
+                     <p className="text-xs font-mono text-dark-400 break-all">{selectedSessionId}</p>
+                  </div>
+               </div>
             </section>
           </div>
 
