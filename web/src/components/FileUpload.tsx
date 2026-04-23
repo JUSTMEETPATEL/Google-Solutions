@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { runScan } from '../api/client';
+import type { ScanResult } from '../api/client';
 import { useAppStore } from '../store/appStore';
 
 export function FileUpload() {
@@ -10,14 +11,15 @@ export function FileUpload() {
   const [datasetFile, setDatasetFile] = useState<File | null>(null);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { setSelectedSession } = useAppStore();
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const { setSelectedSession, setCurrentScanResult } = useAppStore();
 
   const onDropModel = useCallback((files: File[]) => {
-    if (files[0]) setModelFile(files[0]);
+    if (files[0]) { setModelFile(files[0]); setScanResult(null); }
   }, []);
 
   const onDropDataset = useCallback((files: File[]) => {
-    if (files[0]) setDatasetFile(files[0]);
+    if (files[0]) { setDatasetFile(files[0]); setScanResult(null); }
   }, []);
 
   const modelDropzone = useDropzone({
@@ -36,9 +38,14 @@ export function FileUpload() {
     if (!modelFile || !datasetFile) return;
     setScanning(true);
     setError(null);
+    setScanResult(null);
     try {
       const result = await runScan(modelFile, datasetFile);
-      setSelectedSession(result.session_id);
+      setScanResult(result);
+      setCurrentScanResult(result);
+      if (result.session_id) {
+        setSelectedSession(result.session_id);
+      }
     } catch (e: any) {
       setError(e.message || 'Scan failed');
     } finally {
@@ -55,6 +62,10 @@ export function FileUpload() {
     background: isDragActive ? 'rgba(59,130,246,0.08)' : hasFile ? 'rgba(34,197,94,0.05)' : 'transparent',
     transition: 'all 0.2s',
   });
+
+  // Extract risk level from results
+  const riskLevel = scanResult?.analysis_results?.overall_risk_level;
+  const riskColor = riskLevel === 'high' ? '#ef4444' : riskLevel === 'medium' ? '#eab308' : '#22c55e';
 
   return (
     <div style={{ padding: 24, maxWidth: 600 }}>
@@ -99,10 +110,38 @@ export function FileUpload() {
           transition: 'all 0.2s',
         }}
       >
-        {scanning ? '⏳ Scanning...' : '⚖️ Run Bias Analysis'}
+        {scanning ? '⏳ Analyzing bias... (this may take a moment)' : '⚖️ Run Bias Analysis'}
       </button>
 
       {error && <p style={{ color: '#ef4444', fontSize: 13, marginTop: 12 }}>✗ {error}</p>}
+
+      {scanResult && (
+        <div style={{
+          marginTop: 16,
+          padding: 16,
+          borderRadius: 10,
+          background: 'rgba(34,197,94,0.08)',
+          border: '1px solid rgba(34,197,94,0.2)',
+        }}>
+          <p style={{ color: '#22c55e', fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
+            ✓ Bias analysis complete
+          </p>
+          <p style={{ color: '#94a3b8', fontSize: 12 }}>
+            Model: {scanResult.model_name || modelFile?.name}
+          </p>
+          {riskLevel && (
+            <p style={{ color: riskColor, fontSize: 13, fontWeight: 700, marginTop: 4, textTransform: 'uppercase' }}>
+              Risk Level: {riskLevel}
+            </p>
+          )}
+          {scanResult.analysis_results?.protected_attributes && (
+            <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 4 }}>
+              Protected attributes analyzed: {scanResult.analysis_results.protected_attributes.join(', ')}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
+

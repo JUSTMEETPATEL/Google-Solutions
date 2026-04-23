@@ -79,6 +79,28 @@ def read_pid_file() -> int | None:
         return None
 
 
+def _is_pid_alive(pid: int) -> bool:
+    """Check whether a process with the given PID is alive (cross-platform)."""
+    if os.name == "nt":
+        # Windows: use ctypes to call OpenProcess — safe, no side-effects.
+        import ctypes
+        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+        handle = ctypes.windll.kernel32.OpenProcess(
+            PROCESS_QUERY_LIMITED_INFORMATION, False, pid
+        )
+        if handle:
+            ctypes.windll.kernel32.CloseHandle(handle)
+            return True
+        return False
+    else:
+        # Unix: signal 0 checks existence without affecting the process.
+        try:
+            os.kill(pid, 0)
+            return True
+        except (ProcessLookupError, PermissionError):
+            return False
+
+
 def is_server_running() -> bool:
     """Check if a FairCheck server is already running.
 
@@ -91,11 +113,7 @@ def is_server_running() -> bool:
     # Don't consider ourselves as "already running"
     if pid == os.getpid():
         return False
-    try:
-        os.kill(pid, 0)  # Signal 0 = check if process exists
-        return True
-    except (ProcessLookupError, PermissionError):
-        return False
+    return _is_pid_alive(pid)
 
 
 # ─── Health Polling (INT-03) ──────────────────────────────

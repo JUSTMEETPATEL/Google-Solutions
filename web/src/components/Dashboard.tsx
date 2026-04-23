@@ -11,21 +11,33 @@ import { useAppStore } from '../store/appStore';
 import { fetchSession } from '../api/client';
 
 export function Dashboard() {
-  const { selectedSessionId, regulation, setRegulation } = useAppStore();
-  const [session, setSession] = useState<any>(null);
+  const { selectedSessionId, currentScanResult, regulation, setRegulation } = useAppStore();
+  const [fetchedSession, setFetchedSession] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
 
+  // If we have a scan result in the store, use it directly.
+  // Only fetch from API for sessions loaded from sidebar (persisted sessions).
   useEffect(() => {
     if (!selectedSessionId) {
-      setSession(null);
+      setFetchedSession(null);
+      setFetchError(false);
       return;
     }
+    // If the current scan result matches this session, no need to fetch
+    if (currentScanResult?.session_id === selectedSessionId) {
+      setFetchedSession(null);
+      setFetchError(false);
+      return;
+    }
+    // Try fetching from the API (for persisted sessions)
     setLoading(true);
+    setFetchError(false);
     fetchSession(selectedSessionId)
-      .then((data) => setSession(data))
-      .catch(() => setSession(null))
+      .then((data) => setFetchedSession(data))
+      .catch(() => setFetchError(true))
       .finally(() => setLoading(false));
-  }, [selectedSessionId]);
+  }, [selectedSessionId, currentScanResult]);
 
   // No session selected — show upload view
   if (!selectedSessionId) {
@@ -39,15 +51,27 @@ export function Dashboard() {
   if (loading) {
     return (
       <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#94a3b8', fontSize: 16 }}>⏳ Loading session...</p>
+        <p style={{ color: '#94a3b8', fontSize: 16 }}>Loading session...</p>
       </main>
     );
   }
 
+  // Determine the session data source: store scan result or fetched session
+  const session = currentScanResult?.session_id === selectedSessionId
+    ? currentScanResult
+    : fetchedSession;
+
   if (!session) {
+    if (fetchError) {
+      return (
+        <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p style={{ color: '#ef4444', fontSize: 14 }}>Failed to load session data.</p>
+        </main>
+      );
+    }
     return (
-      <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#ef4444', fontSize: 14 }}>Failed to load session data.</p>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <FileUpload />
       </main>
     );
   }
@@ -92,7 +116,7 @@ export function Dashboard() {
       {/* Charts */}
       <div style={{ marginBottom: 24 }}>
         <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9', marginBottom: 12 }}>
-          📊 Bias Dashboard
+          Bias Dashboard
         </h3>
         <BiasCharts analysisResults={analysis} />
       </div>
@@ -104,3 +128,4 @@ export function Dashboard() {
     </main>
   );
 }
+
