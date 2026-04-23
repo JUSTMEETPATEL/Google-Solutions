@@ -1,4 +1,4 @@
-/** Dashboard — main view assembling all components. */
+/** Dashboard — main view assembling all analysis components. */
 
 import { useEffect, useState } from 'react';
 import { BiasCharts } from './BiasCharts';
@@ -7,15 +7,37 @@ import { RegulationSelector } from './RegulationSelector';
 import { OversightForm } from './OversightForm';
 import { PDFExport } from './PDFExport';
 import { FileUpload } from './FileUpload';
+import { ExplanationsPanel } from './ExplanationsPanel';
+import { IntersectionalPanel } from './IntersectionalPanel';
+import { ConfidenceIntervalsPanel } from './ConfidenceIntervalsPanel';
+import { FeatureAttributionPanel } from './FeatureAttributionPanel';
+import { MitigationPanel } from './MitigationPanel';
+import { DriftMonitor } from './DriftMonitor';
 import { useAppStore } from '../store/appStore';
 import { fetchSession } from '../api/client';
-import { Loader2, AlertCircle, Fingerprint } from 'lucide-react';
+import {
+  Loader2, AlertCircle, Fingerprint, BookOpen, Users,
+  BarChart2, Layers, Zap, TrendingUp, MessageSquare
+} from 'lucide-react';
+
+type TabId = 'metrics' | 'explanations' | 'intersectional' | 'significance' | 'attribution' | 'mitigation' | 'drift';
+
+const TABS: { id: TabId; label: string; icon: any }[] = [
+  { id: 'metrics', label: 'Metrics', icon: BarChart2 },
+  { id: 'explanations', label: 'Explanations', icon: MessageSquare },
+  { id: 'intersectional', label: 'Intersectional', icon: Users },
+  { id: 'significance', label: 'Significance', icon: BarChart2 },
+  { id: 'attribution', label: 'Attribution', icon: Layers },
+  { id: 'mitigation', label: 'Mitigation', icon: Zap },
+  { id: 'drift', label: 'Drift', icon: TrendingUp },
+];
 
 export function Dashboard() {
   const { selectedSessionId, currentScanResult, regulation, setRegulation } = useAppStore();
   const [fetchedSession, setFetchedSession] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabId>('metrics');
 
   useEffect(() => {
     if (!selectedSessionId) {
@@ -75,6 +97,12 @@ export function Dashboard() {
 
   const analysis = session.analysis_results || {};
   const riskLevel = analysis.overall_risk_level || 'unknown';
+  const explanations = session.explanations || {};
+  const intersectional = session.intersectional_analysis;
+  const confidenceIntervals = session.confidence_intervals;
+  const featureAttribution = session.feature_attribution;
+  const recommendations = session.recommendations || [];
+  const mitigationHistory = session.mitigation_history || [];
 
   const counts = { pass: 0, warning: 0, fail: 0 };
   for (const attr of Object.values(analysis.results || {})) {
@@ -114,17 +142,15 @@ export function Dashboard() {
           </div>
         </header>
 
-        {/* Bento Grid Layout */}
+        {/* Top Stats Row */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
           {/* Left Column: Risk & Oversight (3 cols) */}
           <div className="lg:col-span-3 flex flex-col gap-6">
-            {/* Risk Score */}
             <section>
               <RiskScoreCard level={riskLevel} metrics={counts} />
             </section>
 
-            {/* Oversight Form */}
             <section className="glass-panel p-6 rounded-2xl flex-1">
               <div className="mb-4 flex items-center gap-2">
                 <div className="h-4 w-1 rounded-sm bg-purple-500"></div>
@@ -136,49 +162,161 @@ export function Dashboard() {
             </section>
           </div>
 
-          {/* Middle Column: Charts (6 cols) */}
-          <div className="lg:col-span-6 flex flex-col">
-            <section className="glass-panel p-6 rounded-2xl glow-border flex-1 h-full">
-              <div className="mb-6 flex items-center gap-2">
+          {/* Middle + Right: Tab Navigation + Content (9 cols) */}
+          <div className="lg:col-span-9 flex flex-col gap-4">
+            
+            {/* Tab Navigation */}
+            <nav className="flex gap-1 p-1 bg-dark-950/60 rounded-xl border border-white/5 overflow-x-auto">
+              {TABS.map(tab => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                // Show badge for intersectional/attribution if data exists
+                let hasBadge = false;
+                if (tab.id === 'intersectional' && intersectional?.intersections?.length) hasBadge = true;
+                if (tab.id === 'attribution' && featureAttribution?.bias_drivers?.length) hasBadge = true;
+                if (tab.id === 'mitigation' && recommendations.length > 0 && recommendations[0]?.algorithm !== 'none') hasBadge = true;
+
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all duration-200 whitespace-nowrap ${
+                      isActive
+                        ? 'bg-white/10 text-white shadow-sm'
+                        : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {tab.label}
+                    {hasBadge && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Tab Content */}
+            <section className="glass-panel p-6 rounded-2xl glow-border min-h-[400px]">
+              <div className="mb-5 flex items-center gap-2">
                 <div className="h-4 w-1 rounded-sm bg-primary-500"></div>
                 <h3 className="text-sm font-bold text-white uppercase tracking-widest">
-                  Metrics Analysis
+                  {TABS.find(t => t.id === activeTab)?.label || 'Analysis'}
                 </h3>
               </div>
-              <div className="pr-2">
-                <BiasCharts analysisResults={analysis} />
-              </div>
+
+              {activeTab === 'metrics' && (
+                <div className="pr-2">
+                  <BiasCharts analysisResults={analysis} />
+                </div>
+              )}
+
+              {activeTab === 'explanations' && (
+                <ExplanationsPanel explanations={explanations} />
+              )}
+
+              {activeTab === 'intersectional' && (
+                intersectional ? (
+                  <IntersectionalPanel data={intersectional} />
+                ) : (
+                  <EmptyState
+                    icon={Users}
+                    title="No Intersectional Data"
+                    description="Intersectional analysis requires 2+ protected attributes in the dataset."
+                  />
+                )
+              )}
+
+              {activeTab === 'significance' && (
+                confidenceIntervals ? (
+                  <ConfidenceIntervalsPanel data={confidenceIntervals} />
+                ) : (
+                  <EmptyState
+                    icon={BarChart2}
+                    title="Significance Testing Unavailable"
+                    description="Bootstrap confidence intervals could not be computed for this scan."
+                  />
+                )
+              )}
+
+              {activeTab === 'attribution' && (
+                featureAttribution ? (
+                  <FeatureAttributionPanel data={featureAttribution} />
+                ) : (
+                  <EmptyState
+                    icon={Layers}
+                    title="Feature Attribution Unavailable"
+                    description="Permutation importance could not be computed for this model."
+                  />
+                )
+              )}
+
+              {activeTab === 'mitigation' && (
+                <MitigationPanel
+                  sessionId={selectedSessionId}
+                  recommendations={recommendations}
+                  mitigationHistory={mitigationHistory}
+                />
+              )}
+
+              {activeTab === 'drift' && (
+                <DriftMonitor currentSessionId={selectedSessionId} />
+              )}
             </section>
           </div>
-
-          {/* Right Column: Metadata / Compliance Status (3 cols) */}
-          <div className="lg:col-span-3 flex flex-col">
-            <section className="glass-panel p-6 rounded-2xl relative overflow-hidden flex-1 flex flex-col justify-center">
-               <div className="absolute -right-12 -bottom-12 opacity-5 pointer-events-none">
-                 <Fingerprint className="w-64 h-64 text-primary-500" />
-               </div>
-               <div className="relative z-10">
-                  <div className="inline-flex items-center justify-center p-3 rounded-xl bg-dark-950/50 border border-white/5 mb-4 shadow-inner">
-                    <AlertCircle className="w-6 h-6 text-primary-500" />
-                  </div>
-                  <h4 className="text-sm font-bold text-white mb-3 uppercase tracking-widest">
-                    Compliance Status
-                  </h4>
-                  <p className="text-sm text-dark-300 leading-relaxed text-balance mb-6">
-                    Audit generated under <span className="text-white font-semibold">{regulation?.toUpperCase() || 'STANDARD'}</span>. Complete oversight to unlock PDF.
-                  </p>
-
-                  <div className="pt-4 border-t border-white/10 mt-auto">
-                     <p className="text-[10px] uppercase tracking-widest text-dark-500 font-bold mb-1">Session ID</p>
-                     <p className="text-xs font-mono text-dark-400 break-all">{selectedSessionId}</p>
-                  </div>
-               </div>
-            </section>
-          </div>
-
         </div>
+
+        {/* Compliance Status Footer */}
+        <section className="glass-panel p-6 rounded-2xl relative overflow-hidden">
+          <div className="absolute -right-12 -bottom-12 opacity-5 pointer-events-none">
+            <Fingerprint className="w-64 h-64 text-primary-500" />
+          </div>
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h4 className="text-sm font-bold text-white mb-1 uppercase tracking-widest">
+                Compliance Status
+              </h4>
+              <p className="text-sm text-dark-300 leading-relaxed text-balance">
+                Audit generated under <span className="text-white font-semibold">{regulation?.toUpperCase() || 'STANDARD'}</span>.
+                {recommendations.length > 0 && recommendations[0]?.algorithm !== 'none'
+                  ? ` ${recommendations.length} mitigation strategies recommended.`
+                  : ' All metrics within acceptable thresholds.'
+                }
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-dark-500 font-bold mb-1">Session</p>
+                <p className="text-xs font-mono text-dark-400">{selectedSessionId.substring(0, 16)}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-dark-500 font-bold mb-1">Risk</p>
+                <p className={`text-xs font-bold uppercase tracking-widest ${
+                  riskLevel === 'high' ? 'text-red-400' :
+                  riskLevel === 'medium' ? 'text-amber-400' :
+                  'text-emerald-400'
+                }`}>
+                  {riskLevel}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
   );
 }
 
+/** Empty state placeholder for tabs without data. */
+function EmptyState({ icon: Icon, title, description }: { icon: any; title: string; description: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="p-4 bg-dark-800 rounded-full mb-4 border border-white/5">
+        <Icon className="w-8 h-8 text-zinc-500" />
+      </div>
+      <p className="text-sm font-bold text-zinc-400 uppercase tracking-widest mb-2">{title}</p>
+      <p className="text-xs text-zinc-500 max-w-sm">{description}</p>
+    </div>
+  );
+}

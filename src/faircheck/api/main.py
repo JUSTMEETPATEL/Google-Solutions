@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from faircheck.api.errors import http_exception_handler, validation_exception_handler
-from faircheck.api.routers import health, mitigate, oversight, reports, scan, sessions
+from faircheck.api.routers import drift, health, mitigate, oversight, reports, scan, sessions
 
 app = FastAPI(
     title="FairCheck API",
@@ -50,3 +50,4 @@ app.include_router(sessions.router, prefix=_API_PREFIX)
 app.include_router(mitigate.router, prefix=_API_PREFIX)
 app.include_router(reports.router, prefix=_API_PREFIX)
 app.include_router(oversight.router, prefix=_API_PREFIX)
+app.include_router(drift.router, prefix=_API_PREFIX)
