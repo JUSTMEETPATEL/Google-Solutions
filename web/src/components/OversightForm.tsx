@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { submitOversight } from '../api/client';
+import { useAppStore } from '../store/appStore';
 import { UserCheck, CheckCircle2, Send } from 'lucide-react';
 
 interface OversightFormProps {
@@ -14,18 +15,24 @@ export function OversightForm({ sessionId }: OversightFormProps) {
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  
+  const { setOversightApproved } = useAppStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    const today = new Date().toISOString().slice(0, 10);
     try {
       await submitOversight(sessionId, {
         reviewer,
-        date: new Date().toISOString().slice(0, 10),
+        date: today,
         decision,
         notes: notes || undefined,
       });
       setSubmitted(true);
+      if (decision === 'approved' || decision === 'conditional') {
+        setOversightApproved(true, reviewer, decision, today);
+      }
     } catch {
       // silently ignore
     } finally {

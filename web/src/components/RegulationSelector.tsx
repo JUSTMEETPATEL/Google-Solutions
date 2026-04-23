@@ -2,10 +2,11 @@
 import { ShieldCheck, ChevronDown } from 'lucide-react';
 
 const REGULATIONS = [
+  { value: 'standard', label: 'Standard Audit' },
   { value: 'eu_ai_act_high', label: 'EU AI Act (High Risk)' },
-  { value: 'eu_ai_act_limited', label: 'EU AI Act (Limited Risk)' },
-  { value: 'india_dpdpa', label: 'India DPDPA' },
-  { value: 'custom', label: 'Custom' },
+  { value: 'nyc_144', label: 'NYC Local Law 144' },
+  { value: 'nist_rmf', label: 'NIST AI RMF' },
+  { value: 'internal', label: 'Internal Governance' },
 ];
 
 interface RegulationSelectorProps {
