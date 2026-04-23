@@ -1,4 +1,5 @@
 /** RegulationSelector — dropdown for regulation framework (WEB-04). */
+import { ShieldCheck, ChevronDown } from 'lucide-react';
 
 const REGULATIONS = [
   { value: 'eu_ai_act_high', label: 'EU AI Act (High Risk)' },
@@ -14,28 +15,25 @@ interface RegulationSelectorProps {
 
 export function RegulationSelector({ value, onChange }: RegulationSelectorProps) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-      <label style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', whiteSpace: 'nowrap' }}>
+    <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 text-sm font-semibold text-dark-400 whitespace-nowrap">
+        <ShieldCheck className="w-4 h-4" />
         Regulation:
-      </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{
-          background: '#1e293b',
-          color: '#f1f5f9',
-          border: '1px solid #334155',
-          borderRadius: 8,
-          padding: '8px 12px',
-          fontSize: 13,
-          cursor: 'pointer',
-          outline: 'none',
-        }}
-      >
-        {REGULATIONS.map((r) => (
-          <option key={r.value} value={r.value}>{r.label}</option>
-        ))}
-      </select>
+      </div>
+      <div className="relative group">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="appearance-none bg-dark-800/80 hover:bg-dark-700/80 text-white border border-white/10 rounded-xl px-4 py-2 pr-10 text-sm font-medium cursor-pointer outline-none focus:ring-2 focus:ring-primary-500/50 transition-all shadow-sm"
+        >
+          {REGULATIONS.map((r) => (
+            <option key={r.value} value={r.value} className="bg-dark-800 text-white">
+              {r.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="w-4 h-4 text-dark-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-white transition-colors" />
+      </div>
     </div>
   );
 }

@@ -22,7 +22,7 @@ function AppContent() {
   }, [setSessions]);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#0f172a' }}>
+    <div className="flex min-h-screen w-full bg-transparent">
       <Sidebar />
       <Dashboard />
     </div>

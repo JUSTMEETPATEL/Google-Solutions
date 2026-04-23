@@ -1,79 +1,81 @@
 /** Sidebar — session history list (WEB-01). */
 
 import { useAppStore } from '../store/appStore';
-import type { SessionSummary } from '../api/client';
+import { ShieldCheck, History, Activity, Database, Sparkles } from 'lucide-react';
 
 const RISK_COLORS: Record<string, string> = {
-  high: '#ef4444', medium: '#eab308', low: '#22c55e',
+  high: 'text-red-400 bg-red-400/10 border-red-400/20',
+  medium: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+  low: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
 };
 
 export function Sidebar() {
   const { sessions, selectedSessionId, setSelectedSession } = useAppStore();
 
   return (
-    <aside style={{
-      width: 280,
-      minHeight: '100vh',
-      background: '#1e293b',
-      borderRight: '1px solid #334155',
-      display: 'flex',
-      flexDirection: 'column',
-      flexShrink: 0,
-    }}>
-      <div style={{ padding: '20px 16px', borderBottom: '1px solid #334155' }}>
-        <h1 style={{ fontSize: 18, fontWeight: 700, color: '#3b82f6', display: 'flex', alignItems: 'center', gap: 8 }}>
-          ⚖️ FairCheck
+    <aside className="w-[300px] min-h-screen flex flex-col shrink-0 border-r border-white/5 bg-dark-900/40 backdrop-blur-md relative z-10">
+      <div className="p-6 border-b border-white/5">
+        <h1 className="text-xl font-bold text-white flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl shadow-lg shadow-primary-500/20">
+            <ShieldCheck className="w-5 h-5 text-white" />
+          </div>
+          FairCheck
         </h1>
-        <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>
-          AI Bias Detection Platform
+        <p className="text-xs text-dark-400 mt-3 flex items-center gap-1.5 font-medium">
+          <Sparkles className="w-3.5 h-3.5 text-primary-400" />
+          AI Bias Detection Engine
         </p>
       </div>
 
-      <div style={{ padding: '12px 16px' }}>
-        <h3 style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-          Sessions
-        </h3>
+      <div className="p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <History className="w-4 h-4 text-dark-400" />
+          <h3 className="text-[11px] font-semibold text-dark-400 uppercase tracking-wider">
+            Analysis History
+          </h3>
+        </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
+      <div className="flex-1 overflow-y-auto px-3 pb-6 space-y-1">
         {sessions.length === 0 && (
-          <p style={{ padding: '12px 8px', fontSize: 13, color: '#64748b' }}>
-            No scans yet. Upload a model to start.
-          </p>
+          <div className="mx-2 p-6 rounded-2xl border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-3">
+            <Database className="w-8 h-8 text-dark-600" />
+            <p className="text-sm text-dark-400">No scans yet.<br/>Upload a model to start.</p>
+          </div>
         )}
-        {sessions.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => setSelectedSession(s.id)}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              marginBottom: 4,
-              borderRadius: 8,
-              border: 'none',
-              background: selectedSessionId === s.id ? '#334155' : 'transparent',
-              color: '#f1f5f9',
-              cursor: 'pointer',
-              textAlign: 'left',
-              transition: 'background 0.15s',
-            }}
-          >
-            <div style={{ fontSize: 13, fontWeight: 500 }}>{s.model_name || 'Unknown'}</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-              <span style={{ fontSize: 11, color: '#94a3b8' }}>
-                {s.created_at?.slice(0, 10) || '—'}
-              </span>
-              <span style={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: RISK_COLORS[s.risk_level?.toLowerCase()] || '#94a3b8',
-                textTransform: 'uppercase',
-              }}>
-                {s.risk_level || '—'}
-              </span>
-            </div>
-          </button>
-        ))}
+        {sessions.map((s) => {
+          const isSelected = selectedSessionId === s.id;
+          const riskStyle = RISK_COLORS[s.risk_level?.toLowerCase()] || 'text-dark-400 bg-dark-800 border-white/5';
+          
+          return (
+            <button
+              key={s.id}
+              onClick={() => setSelectedSession(s.id)}
+              className={`w-full p-3.5 rounded-xl border text-left transition-all duration-300 group ${
+                isSelected 
+                  ? 'bg-primary-500/10 border-primary-500/30 shadow-[0_0_15px_rgba(59,130,246,0.1)]' 
+                  : 'bg-transparent border-transparent hover:bg-white/5'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className={`text-sm font-medium truncate mb-1.5 transition-colors ${isSelected ? 'text-primary-100' : 'text-dark-100 group-hover:text-white'}`}>
+                    {s.model_name || 'Unknown Model'}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-dark-400">
+                    <Activity className="w-3.5 h-3.5" />
+                    <span>{s.created_at?.slice(0, 10) || '—'}</span>
+                  </div>
+                </div>
+                {s.risk_level && (
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md border ${riskStyle}`}>
+                    {s.risk_level}
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
       </div>
     </aside>
   );
