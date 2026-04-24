@@ -311,15 +311,28 @@ def _compute_improvement(
             b_rank = status_rank.get(b_status, 1)
             a_rank = status_rank.get(a_status, 1)
 
+            change = "unchanged"
             if a_rank < b_rank:
-                improved += 1
                 change = "improved"
             elif a_rank > b_rank:
-                degraded += 1
                 change = "degraded"
+            elif a_val is not None and b_val is not None:
+                # If rank is the same, check numeric improvement
+                ideal = 1.0 if m_name == "disparate_impact_ratio" else 0.0
+                a_diff = abs(a_val - ideal)
+                b_diff = abs(b_val - ideal)
+                # Use a small epsilon to ignore floating point noise
+                if a_diff < b_diff - 0.001:
+                    change = "improved"
+                elif a_diff > b_diff + 0.001:
+                    change = "degraded"
+            
+            if change == "improved":
+                improved += 1
+            elif change == "degraded":
+                degraded += 1
             else:
                 unchanged += 1
-                change = "unchanged"
 
             details.append({
                 "attribute": attr_name,
