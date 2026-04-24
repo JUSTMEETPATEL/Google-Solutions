@@ -73,6 +73,7 @@ async def get_session(session_id: str) -> dict:
             "confidence_intervals": bias_metrics.get("confidence_intervals"),
             "feature_attribution": bias_metrics.get("feature_attribution"),
             "recommendations": bias_metrics.get("recommendations", []),
+            "ai_summary": bias_metrics.get("ai_summary"),
             "mitigation_history": row.mitigation_history,
             "oversight_decision": row.oversight_decision,
         }

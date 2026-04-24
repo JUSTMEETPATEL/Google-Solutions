@@ -1,6 +1,7 @@
 /** API client for FairCheck FastAPI backend. */
 
-const BASE = '/api/v1';
+const API_BASE = import.meta.env.VITE_API_BASE_URL?.trim();
+const BASE = API_BASE ? API_BASE.replace(/\/$/, '') : '/api/v1';
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -115,6 +116,7 @@ export interface SessionDetail extends SessionSummary {
   confidence_intervals?: Record<string, Record<string, ConfidenceInterval>> | null;
   feature_attribution?: FeatureAttribution | null;
   recommendations?: MitigationRecommendation[];
+  ai_summary?: AISummary | null;
   mitigation_history?: any[];
   oversight_decision?: string | null;
   model_metadata?: Record<string, any>;
@@ -134,6 +136,18 @@ export interface ScanResult {
   confidence_intervals?: Record<string, Record<string, ConfidenceInterval>> | null;
   feature_attribution?: FeatureAttribution | null;
   recommendations?: MitigationRecommendation[];
+  ai_summary?: AISummary | null;
+}
+
+export interface AISummary {
+  provider: string;
+  model: string;
+  generated: boolean;
+  generated_at: string;
+  executive_summary: string | null;
+  top_risks: string[];
+  recommended_actions: string[];
+  error: string | null;
 }
 
 export interface OversightData {

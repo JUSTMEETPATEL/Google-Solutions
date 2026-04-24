@@ -1,0 +1,96 @@
+[33m5b57499[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mphase12/feat-improvement[m[33m, [m[1;31morigin/phase12/feat-improvement[m[33m)[m google cloud fix
+[33mbeffd71[m google cloud services
+[33md79109f[m maaakichuuu gogole ki
+[33md5a50db[m sidebar improvement
+[33m0aab312[m pdf download fix
+[33m640564a[m new mitigation features final
+[33md448266[m readme
+[33mcf4b966[m various new feat
+[33mb43244d[m[33m ([m[1;31morigin/samples[m[33m, [m[1;32msamples[m[33m)[m samples for diff scenarios
+[33ma5960c2[m[33m ([m[1;31morigin/phase11/frontend-improve[m[33m, [m[1;32mphase11/frontend-improve[m[33m)[m report generation
+[33md582210[m final improvment
+[33mbf43eb1[m further enhancmemnt
+[33m79dd3f4[m obsidian
+[33mf174ee5[m bias improvmenet chart
+[33m47b5227[m frontendimprove
+[33mcab6002[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m, [m[1;32mfixes[m[33m)[m fix: connected all endpoints, fixed model and api errors
+[33m3f53f4b[m readme
+[33m350c2ce[m Merge pull request #11 from JUSTMEETPATEL/Phase-8
+[33mc4f0f34[m Merge pull request #10 from JUSTMEETPATEL/Phase-10
+[33mcc3148a[m[33m ([m[1;31morigin/Phase-8[m[33m)[m Merge pull request #9 from xpushkal/main
+[33m535e052[m[33m ([m[1;31morigin/Phase-10[m[33m)[m feat(phase-11): Integration & E2E Testing
+[33m3dbd7d8[m feat(phase-10): EU AI Act Regulation Templates
+[33md62391d[m phase10
+[33m717c6dd[m Merge pull request #8 from JUSTMEETPATEL/Phase-8
+[33ma2c228a[m feat(phase-8): Web App — Vite + React compliance dashboard
+[33m9cddc1b[m Merge pull request #7 from JUSTMEETPATEL/phase6new
+[33m93629aa[m[33m ([m[1;31morigin/phase6new[m[33m)[m Merge branch 'main' into phase6new
+[33m03f6219[m feat(phase-6): TUI Interface — ink-based terminal UI
+[33md35a21c[m Merge pull request #6 from JUSTMEETPATEL/phase9
+[33mcb4c6ab[m[33m ([m[1;31morigin/phase9[m[33m)[m feat(phase-9): Mitigation Pipeline — 6 algorithms with before/after comparison
+[33ma05e09a[m Merge pull request #5 from JUSTMEETPATEL/pushkal1
+[33md3e5fd9[m[33m ([m[1;31morigin/pushkal1[m[33m)[m feat(phase-7): Report Builder — PDF/MD/DOCX generation
+[33m5d81ec0[m Merge pull request #4 from JUSTMEETPATEL/pushkal1
+[33m141fad8[m updated gitignore
+[33m51d67ff[m feat(phase-3): BiasAnalyzer orchestrator, per-group breakdown, test suite
+[33m825bd8e[m feat(phase-3): core fairness metrics, BaseMetric ABC, domain guidance, config
+[33m472f075[m planning phase3
+[33mbf24f6a[m Merge pull request #3 from JUSTMEETPATEL/phase-6
+[33m0a9ba9b[m phase 3
+[33m2448bfd[m[33m ([m[1;31morigin/phase-6[m[33m)[m docs(phase-06): complete phase execution
+[33m5bc31c2[m docs(06): add plan 1 execution summary
+[33m022bfcb[m fix(06): resolve Node 22 Buffer-to-BlobPart type error in api.ts
+[33mf3f9438[m feat(06-01-06): build Commander CLI entrypoint with scan and sessions commands
+[33m236c02b[m feat(06-01-05): build Ink App root with state machine, CI mode, and W/R/Q hotkeys
+[33mae66034[m feat(06-01-04): build Ink components — MetricsTable, AttributePrompt, SessionList
+[33md4f8023[m feat(06-01-03): build API client wrapper with scan, sessions, and report methods
+[33mf57f09d[m feat(06-01-02): build Python server orchestrator with port discovery and health polling
+[33mea21c0c[m feat(06-01-01): initialize TUI Node.js project with Ink + Commander
+[33m72e9342[m docs(phase-06): add plan and validation strategy
+[33mbcd486c[m docs(phase-06): save technical research
+[33m4872de6[m docs(phase-06): create context from discussion
+[33m3515f70[m chore: Add .python-version file for 3.11
+[33m44a4b6c[m Merge pull request #2 from JUSTMEETPATEL/phase-5
+[33m3a180c1[m[33m ([m[1;31morigin/phase-5[m[33m)[m docs(phase-05): complete phase execution
+[33mf43fabb[m docs(05): add plan 1 execution summary
+[33m9ac9c37[m feat(05): initialize Alembic with initial schema migration [05-01-04]
+[33madea743[m feat(05): implement Session ORM model with JSON columns [05-01-03]
+[33m1cef357[m feat(05): implement database connection module with WAL mode [05-01-02]
+[33m2ba2dfb[m test(05): add session persistence test stubs [05-01-01]
+[33m63df774[m docs(05): generate phase plan
+[33mc5ff85c[m docs(05): capture phase context
+[33m4cb0f69[m Merge pull request #1 from JUSTMEETPATEL/phase-4
+[33mf9eff36[m[33m ([m[1;31morigin/phase-4[m[33m)[m docs(04): complete phase verification and roadmap update
+[33m33db2cd[m docs(04): add execution summary for plan 04-1
+[33m1f06f77[m test(04): add E2E health, RFC 7807, and router smoke tests
+[33md100cd4[m feat(04): implement programmatic port discovery and server launcher
+[33md08e025[m feat(04): implement FastAPI main app with CORS and router mounting
+[33m8bbdfb6[m feat(04): create modular API routers for all endpoints
+[33m6068cd8[m feat(04): implement RFC 7807 structured error handling
+[33mc77c322[m feat(04): add FastAPI, python-multipart, httpx dependencies
+[33m1d2bb56[m docs(04): create phase plan
+[33mdded344[m docs(04): complete phase research and validation strategy
+[33m35777ab[m docs(04): capture phase context
+[33me5979c4[m docs(phase-02): complete phase execution — verification passed
+[33m4761e42[m feat(phase-02): add DatasetChunker, tests, fix pandas 3.x deprecation
+[33mbda0b3a[m feat(phase-02): implement IngestionPipeline with schema validation
+[33m2e03182[m feat(phase-02): implement DatasetChunker with protected attribute detection
+[33m17a342b[m feat(phase-02): implement model adapters with unified predict interface
+[33ma985244[m feat(phase-02): add ingestion pipeline dependencies
+[33ma4aeeab[m docs(phase-02): Add execution plan
+[33mfed6361[m docs(phase-02): Add research and validation strategy
+[33m5da0526[m docs(phase-02): Capture implementation decisions in CONTEXT.md
+[33m2405c12[m test(01): complete UAT - 3 passed, 0 issues
+[33mfc45e79[m first commit
+[33m79d42cd[m docs(01-01): complete Engine Foundation & Project Scaffold plan
+[33m84eaed1[m feat(01-01): add core bias dependencies and wrapper architecture
+[33mf18623c[m feat(01-01): implement TOML configuration system
+[33m23e0668[m feat(01-01): initialize project structure and uv package
+[33m3c3ca71[m docs(phase-1): planning complete
+[33m768c691[m docs(phase-1): capture implementation context
+[33m899fea5[m docs: create roadmap (11 phases)
+[33m155517b[m docs: define v1 requirements
+[33mf1b9deb[m docs: complete project research (4 dimensions + synthesis)
+[33m8bdbcb9[m docs: initialize project
+[33mda90b3c[m chore: add project config
+[33m2ac8e6a[m docs: add initial PRD

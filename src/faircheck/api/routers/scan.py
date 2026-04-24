@@ -24,6 +24,7 @@ from faircheck.analysis.feature_attribution import compute_feature_attribution
 from faircheck.analysis.intersectional import compute_intersectional_analysis
 from faircheck.analysis.recommend import recommend_mitigation
 from faircheck.analysis.significance import compute_all_confidence_intervals
+from faircheck.ai import generate_scan_summary
 from faircheck.api.cache import cache_scan_artifacts
 from faircheck.config import load_config
 from faircheck.ingestion.pipeline import IngestionPipeline
@@ -200,6 +201,13 @@ async def run_scan(
         # --- Auto-recommend mitigation ---
         recommendations = recommend_mitigation(analysis_dict)
 
+        # --- Gemini compliance summary (optional) ---
+        ai_summary = generate_scan_summary(
+            model_name=model.filename or "Unknown Model",
+            analysis_results=analysis_dict,
+            recommendations=recommendations,
+        )
+
         # --- Cache artifacts for mitigation ---
         try:
             cache_scan_artifacts(
@@ -225,6 +233,7 @@ async def run_scan(
                 confidence_intervals=confidence_intervals,
                 feature_attribution=feature_attribution,
                 recommendations=recommendations,
+                ai_summary=ai_summary,
             )
         except Exception as e:
             logger.warning("Session persistence failed: %s", e)
@@ -239,6 +248,7 @@ async def run_scan(
             "confidence_intervals": confidence_intervals,
             "feature_attribution": feature_attribution,
             "recommendations": recommendations,
+            "ai_summary": ai_summary,
         }
 
     except HTTPException:
@@ -264,6 +274,7 @@ def _persist_session(
     confidence_intervals: dict | None,
     feature_attribution: dict | None,
     recommendations: list,
+    ai_summary: dict,
 ) -> None:
     """Save scan results to the SQLite database."""
     from faircheck.api.db import SessionLocal, engine, Base
@@ -287,6 +298,7 @@ def _persist_session(
                 "confidence_intervals": confidence_intervals,
                 "feature_attribution": feature_attribution,
                 "recommendations": recommendations,
+                "ai_summary": ai_summary,
             },
         )
         db.add(session_row)
