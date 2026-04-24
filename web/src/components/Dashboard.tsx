@@ -13,14 +13,15 @@ import { ConfidenceIntervalsPanel } from './ConfidenceIntervalsPanel';
 import { FeatureAttributionPanel } from './FeatureAttributionPanel';
 import { MitigationPanel } from './MitigationPanel';
 import { DriftMonitor } from './DriftMonitor';
+import { ComparisonPanel } from './ComparisonPanel';
 import { useAppStore } from '../store/appStore';
 import { fetchSession } from '../api/client';
 import {
   Loader2, AlertCircle, Fingerprint, BookOpen, Users,
-  BarChart2, Layers, Zap, TrendingUp, MessageSquare
+  BarChart2, Layers, Zap, TrendingUp, MessageSquare, GitCompareArrows
 } from 'lucide-react';
 
-type TabId = 'metrics' | 'explanations' | 'intersectional' | 'significance' | 'attribution' | 'mitigation' | 'drift';
+type TabId = 'metrics' | 'explanations' | 'intersectional' | 'significance' | 'attribution' | 'mitigation' | 'drift' | 'comparison';
 
 const TABS: { id: TabId; label: string; icon: any }[] = [
   { id: 'metrics', label: 'Metrics', icon: BarChart2 },
@@ -29,6 +30,7 @@ const TABS: { id: TabId; label: string; icon: any }[] = [
   { id: 'significance', label: 'Significance', icon: BarChart2 },
   { id: 'attribution', label: 'Attribution', icon: Layers },
   { id: 'mitigation', label: 'Mitigation', icon: Zap },
+  { id: 'comparison', label: 'Compare', icon: GitCompareArrows },
   { id: 'drift', label: 'Drift', icon: TrendingUp },
 ];
 
@@ -257,6 +259,10 @@ export function Dashboard() {
                   recommendations={recommendations}
                   mitigationHistory={mitigationHistory}
                 />
+              )}
+
+              {activeTab === 'comparison' && (
+                <ComparisonPanel currentSessionId={selectedSessionId} />
               )}
 
               {activeTab === 'drift' && (

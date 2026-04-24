@@ -51,9 +51,9 @@ FairCheck is an **end-to-end, local-first** AI bias detection and fairness audit
   | Calibration by Group | Group | 0.05 | Calibration consistency across demographics |
   | Individual Fairness | Individual | 0.80 | Similar individuals receive similar outcomes |
 
-### 🛠️ Bias Mitigation Pipeline
+### 🛠️ Live Bias Mitigation Pipeline
 
-- **6 Mitigation Algorithms** spanning pre-, in-, and post-processing:
+- **6 Mitigation Algorithms** spanning pre-, in-, and post-processing — **actually executed with real data**, producing verifiable before/after metric comparisons:
 
   | Algorithm | Stage | Library | Description |
   |-----------|-------|---------|-------------|
@@ -64,14 +64,19 @@ FairCheck is an **end-to-end, local-first** AI bias detection and fairness audit
   | Reject Option Classification | Post-processing | AIF360 | Reassigns predictions near the decision boundary |
   | Adversarial Debiasing | In-processing | AIF360 | Trains adversarial network to remove protected attribute signal |
 
-### 🤖 Intelligent Recommendations
+- **Before/After Comparison** — Every mitigation execution produces a full metric re-evaluation showing improved, degraded, and unchanged metrics inline.
+- **Scan Data Caching** — Model and dataset artifacts are automatically cached after scan so mitigation can re-load and execute without re-uploading.
 
-- **Auto-Recommend Engine** — Inspects detected bias patterns and ranks mitigation algorithms by likely effectiveness, with confidence levels and plain-English rationale.
-- **Smart prioritization** — Post-processing (least invasive) ranked before pre-processing before in-processing.
+### 🤖 Smart Mitigation Guidance
+
+- **Auto-Recommend Engine** — Inspects detected bias patterns and ranks mitigation algorithms by likely effectiveness, with confidence levels (`HIGH` / `MEDIUM` / `LOW`) and plain-English rationale.
+- **Context-Aware Prioritization** — Post-processing (least invasive) ranked before pre-processing before in-processing. Algorithms are matched to the specific failing metrics detected in your scan.
+- **One-Click Execute** — Apply any recommended algorithm directly from the dashboard with real-time before/after results.
 
 ### 🔍 Advanced Analysis
 
-- **Intersectional Bias Detection** — Analyses pairwise attribute combinations (e.g., `gender × race`) to uncover hidden subgroup bias that single-attribute analysis misses. Required by EU AI Act Article 10.
+- **Intersectional Bias Detection** — Analyses pairwise attribute combinations (e.g., `gender × race × age`) to uncover compound discrimination that single-attribute analysis misses. Surfaces hidden subgroup bias required by EU AI Act Article 10.
+- **Model Comparison / Diff** — Side-by-side comparison of any two audit sessions. Use to track pre- vs post-mitigation changes, compare candidate models, or build audit trails. Shows per-metric deltas with improved/degraded/unchanged indicators.
 - **SHAP-Based Feature Attribution** — Permutation importance per demographic group to identify proxy features that drive bias disparities.
 - **Bootstrap Confidence Intervals** — Statistical significance testing (500 bootstrap iterations, 95% CI) prevents false flags from small subgroup noise.
 - **Temporal Drift Monitoring** — Compare fairness metrics between audit sessions to detect model degradation over time, with threshold-crossing alerts.
@@ -106,20 +111,30 @@ FairCheck is an **end-to-end, local-first** AI bias detection and fairness audit
 
 ### 📄 Report Generation
 
-- **PDF Reports** — Via Jinja2 templates + WeasyPrint, regulation-ready format.
+- **PDF Reports** — Via Jinja2 templates + WeasyPrint, regulation-ready format with executive summary, risk heatmap, and sign-off section.
+- **Accessible HTML Reports** — WCAG AA compliant standalone HTML with skip-nav links, ARIA labels, semantic headings, high-contrast colors, and screen-reader-friendly data tables. Includes:
+  - Executive summary with pass/warn/fail statistics
+  - Risk heatmap across all attributes and metrics
+  - Remediation timeline showing mitigation history
+  - Recommendation table ranked by confidence
+  - Compliance sign-off section with signature lines
 - **DOCX Reports** — Via python-docx for editable Word documents.
 - **Client-Side PDF Export** — One-click download from the web dashboard via jsPDF.
 - **Metric Visualizations** — Matplotlib charts embedded in server-generated reports.
+- **4 Output Formats** — PDF, HTML, Markdown, DOCX — all from one API endpoint.
 
 ### 🖥️ Web Dashboard
 
 - **Modern UI** — React 19 + Vite + Tailwind CSS 4 with a professional bento-grid layout.
 - **Interactive Charts** — Recharts-powered visualizations for all fairness metrics.
 - **Drag-and-Drop Upload** — Upload `.pkl`, `.joblib`, or `.onnx` models alongside CSV/Parquet/JSON datasets.
+- **Toast Notifications** — Real-time feedback for all actions (mitigation applied, oversight recorded, report exported).
+- **Auto-Refresh Sidebar** — Session list updates automatically after new scans complete.
 - **Bento Dashboard Panels:**
   - 📊 Bias metric charts with pass/warning/fail indicators
   - 🎯 Risk score card with overall risk level
-  - 🔄 Mitigation panel with algorithm selection
+  - 🔄 Mitigation panel with **live execution** and before/after results
+  - 🔀 **Model comparison** panel — side-by-side session diff with delta values
   - 📈 Drift monitoring with session comparison
   - 🔬 Feature attribution visualization
   - 🧬 Intersectional analysis heatmaps
@@ -127,7 +142,7 @@ FairCheck is an **end-to-end, local-first** AI bias detection and fairness audit
   - 📝 Plain-English explanations panel
   - 👤 Human oversight sign-off form
   - 📑 Regulation selector and compliance status
-  - 📥 One-click PDF/DOCX export
+  - 📥 One-click PDF/DOCX/HTML export
 
 ### 📦 Model & Dataset Support
 
@@ -279,7 +294,7 @@ python test_scan.py
 │   React 19    │     Commander.js        │        Uvicorn                 │
 ├───────────────┴─────────────────────────┴────────────────────────────────┤
 │                         REST API  (/api/v1)                              │
-│   /scan  /sessions  /mitigate  /reports  /oversight  /drift  /health     │
+│  /scan /sessions /sessions/compare /mitigate /reports /oversight /drift   │
 ├──────────────────────────────────────────────────────────────────────────┤
 │                          Analysis Engine                                 │
 │  ┌──────────┐ ┌──────────┐ ┌──────────────┐ ┌─────────────────────────┐ │
@@ -292,7 +307,7 @@ python test_scan.py
 │                                              │  • Recommendations      │ │
 │                                              └─────────────────────────┘ │
 ├──────────────────────────────────────────────────────────────────────────┤
-│          Report Engine — Jinja2 + WeasyPrint (PDF) + python-docx (DOCX)  │
+│    Report Engine — Jinja2 + WeasyPrint (PDF) + WCAG HTML + python-docx   │
 │          EU AI Act Mapping — Articles 9, 10, 13, 14, 17                  │
 ├──────────────────────────────────────────────────────────────────────────┤
 │            SQLite (WAL mode) — ~/.faircheck/sessions.db                  │
@@ -340,23 +355,24 @@ Google-Solutions/
 │   │   └── pipeline.py         # Ingestion orchestrator
 │   ├── reports/                # Report generation
 │   │   ├── engine.py           # Report orchestrator
-│   │   ├── renderers.py        # PDF (WeasyPrint) + DOCX renderers
+│   │   ├── renderers.py        # PDF + DOCX + Accessible HTML renderers
 │   │   ├── regulation.py       # EU AI Act article mapping
 │   │   ├── charts.py           # Matplotlib chart generation
 │   │   ├── data.py             # ReportData container
-│   │   └── templates/          # Jinja2 HTML templates
+│   │   └── templates/          # Jinja2 templates (PDF, HTML, WCAG)
 │   ├── api/                    # FastAPI application
 │   │   ├── main.py             # App factory, middleware, router mounts
 │   │   ├── server.py           # Uvicorn launcher with port discovery
 │   │   ├── lifecycle.py        # PID/port file management
+│   │   ├── cache.py            # Scan artifact caching for mitigation
 │   │   ├── db.py               # SQLAlchemy session factory
 │   │   ├── models.py           # ORM models
 │   │   ├── errors.py           # RFC 7807 error handlers
 │   │   └── routers/            # API endpoint handlers
 │   │       ├── scan.py         # POST /scan — run bias analysis
-│   │       ├── sessions.py     # GET /sessions — list/get sessions
-│   │       ├── mitigate.py     # POST /mitigate — apply mitigation
-│   │       ├── reports.py      # POST /reports — generate PDF/DOCX
+│   │       ├── sessions.py     # GET/POST /sessions — CRUD + compare
+│   │       ├── mitigate.py     # POST /mitigate — execute mitigation
+│   │       ├── reports.py      # POST /reports — PDF/HTML/DOCX/MD
 │   │       ├── oversight.py    # POST /oversight — human sign-off
 │   │       ├── drift.py        # POST /drift — temporal comparison
 │   │       └── health.py       # GET /health — health check
@@ -368,8 +384,10 @@ Google-Solutions/
 │   │   │   ├── FileUpload.tsx        # Drag-and-drop upload
 │   │   │   ├── BiasCharts.tsx        # Metric visualizations
 │   │   │   ├── RiskScoreCard.tsx     # Overall risk display
-│   │   │   ├── MitigationPanel.tsx   # Algorithm selection
-│   │   │   ├── DriftMonitor.tsx      # Session comparison
+│   │   │   ├── MitigationPanel.tsx   # Live execution + before/after
+│   │   │   ├── ComparisonPanel.tsx   # Model diff / session comparison
+│   │   │   ├── Toast.tsx             # Toast notification system
+│   │   │   ├── DriftMonitor.tsx      # Temporal drift tracking
 │   │   │   ├── FeatureAttributionPanel.tsx
 │   │   │   ├── IntersectionalPanel.tsx
 │   │   │   ├── ConfidenceIntervalsPanel.tsx
@@ -377,7 +395,7 @@ Google-Solutions/
 │   │   │   ├── OversightForm.tsx     # Human sign-off
 │   │   │   ├── RegulationSelector.tsx
 │   │   │   ├── PDFExport.tsx         # Client-side PDF
-│   │   │   └── Sidebar.tsx           # Navigation
+│   │   │   └── Sidebar.tsx           # Auto-refreshing navigation
 │   │   ├── api/client.ts       # API client (TanStack Query)
 │   │   ├── store/appStore.ts   # Zustand state management
 │   │   ├── App.tsx
@@ -406,8 +424,11 @@ All endpoints are prefixed with `/api/v1`. Full interactive documentation is ava
 | `POST` | `/scan` | Upload model + dataset, run full bias analysis |
 | `GET` | `/sessions` | List all past scan sessions |
 | `GET` | `/sessions/{id}` | Get details of a specific session |
-| `POST` | `/mitigate` | Apply a mitigation algorithm to a scan |
-| `POST` | `/reports` | Generate PDF or DOCX audit report |
+| `DELETE` | `/sessions/{id}` | Delete a scan session |
+| `POST` | `/sessions/compare` | Side-by-side comparison of two sessions |
+| `POST` | `/mitigate` | **Execute** a mitigation algorithm with before/after results |
+| `POST` | `/mitigate/recommend` | Get auto-recommended algorithms for a session |
+| `POST` | `/reports` | Generate audit report (PDF, HTML, DOCX, or Markdown) |
 | `POST` | `/oversight` | Record a human oversight decision |
 
 ### Drift Monitoring Endpoints
@@ -427,7 +448,31 @@ curl -X POST http://127.0.0.1:<port>/api/v1/scan \
   -F "protected_attributes=gender,race"
 ```
 
-### Example: Generate a Report
+### Example: Execute Mitigation
+
+```bash
+curl -X POST http://127.0.0.1:<port>/api/v1/mitigate \
+  -H "Content-Type: application/json" \
+  -d '{"session_id": "<session-id>", "algorithm": "equalized_odds"}'
+```
+
+### Example: Compare Two Models
+
+```bash
+curl -X POST http://127.0.0.1:<port>/api/v1/sessions/compare \
+  -H "Content-Type: application/json" \
+  -d '{"session_a": "<baseline-id>", "session_b": "<current-id>"}'
+```
+
+### Example: Generate an Accessible HTML Report
+
+```bash
+curl -X POST http://127.0.0.1:<port>/api/v1/reports \
+  -H "Content-Type: application/json" \
+  -d '{"session_id": "<session-id>", "format": "html"}'
+```
+
+### Example: Generate a PDF Report
 
 ```bash
 curl -X POST http://127.0.0.1:<port>/api/v1/reports \
@@ -542,7 +587,8 @@ uv run pytest tests/ -v --cov=faircheck
 | **M3** | Mitigation pipeline (6 algorithms) | ✅ Done |
 | **M4** | Report generation (PDF/DOCX, EU AI Act mapping) | ✅ Done |
 | **M5** | Web dashboard, advanced analysis, drift monitoring | ✅ Done |
-| **M6** | TUI interface, full end-to-end polish | 🔲 Planned |
+| **M5.5** | Live mitigation execution, model comparison, WCAG HTML reports, smart guidance, toast system | ✅ Done |
+| **M6** | TUI interface, Docker support, CI/CD integration | 🔲 Planned |
 
 ---
 

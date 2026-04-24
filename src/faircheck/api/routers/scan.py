@@ -24,6 +24,7 @@ from faircheck.analysis.feature_attribution import compute_feature_attribution
 from faircheck.analysis.intersectional import compute_intersectional_analysis
 from faircheck.analysis.recommend import recommend_mitigation
 from faircheck.analysis.significance import compute_all_confidence_intervals
+from faircheck.api.cache import cache_scan_artifacts
 from faircheck.config import load_config
 from faircheck.ingestion.pipeline import IngestionPipeline
 
@@ -198,6 +199,19 @@ async def run_scan(
 
         # --- Auto-recommend mitigation ---
         recommendations = recommend_mitigation(analysis_dict)
+
+        # --- Cache artifacts for mitigation ---
+        try:
+            cache_scan_artifacts(
+                session_id=session_id,
+                model_path=model_path,
+                dataset_path=dataset_path,
+                feature_names=ordered_features,
+                protected_cols=sorted(protected_cols),
+                target_col=target_col,
+            )
+        except Exception as e:
+            logger.warning("Artifact caching failed: %s", e)
 
         # --- Persist to database ---
         model_name = model.filename or "Unknown Model"

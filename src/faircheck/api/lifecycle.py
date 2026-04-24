@@ -39,7 +39,7 @@ def write_port_file(port: int) -> Path:
     _ensure_dir()
     tmp = PORT_FILE.with_suffix(".tmp")
     tmp.write_text(str(port))
-    tmp.rename(PORT_FILE)
+    tmp.replace(PORT_FILE)
     logger.info("Port file written: %s -> %d", PORT_FILE, port)
     return PORT_FILE
 
