@@ -231,6 +231,13 @@ def _execute_mitigation(
 
     # Run mitigation pipeline
     mit_pipeline = MitigationPipeline(config=config)
+    
+    # Get original predictions from the raw model to compare against
+    if hasattr(raw_model, "predict"):
+        y_pred_before = raw_model.predict(X_test.reset_index(drop=True))
+    else:
+        y_pred_before = None
+        
     result = mit_pipeline.run(
         algorithm=algorithm,
         X_train=X_train.reset_index(drop=True),
@@ -238,6 +245,7 @@ def _execute_mitigation(
         X_test=X_test.reset_index(drop=True),
         y_test=y_test,
         sensitive_features=sensitive_features,
+        y_pred_before=y_pred_before,
         estimator=raw_model,
     )
 

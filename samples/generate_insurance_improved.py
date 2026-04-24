@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier
 import joblib
 from pathlib import Path
 
@@ -69,7 +69,7 @@ def generate_insurance_improved():
             "coverage_level", "has_documentation", "risk_score"]]
     y = df["claim_approved"]
 
-    model = MLPClassifier(hidden_layer_sizes=(32, 16), max_iter=500, random_state=505)
+    model = RandomForestClassifier(n_estimators=100, max_depth=8, random_state=505)
     model.fit(X, y)
     model.feature_names_in_ = np.array(list(X.columns))
 
