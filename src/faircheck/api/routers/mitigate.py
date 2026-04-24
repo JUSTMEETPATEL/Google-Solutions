@@ -1,7 +1,7 @@
-"""Bias mitigation endpoint — applies mitigation algorithms.
+"""Bias mitigation endpoint — actually applies mitigation algorithms.
 
-Loads a prior scan session and applies the recommended or specified
-mitigation algorithm, storing before/after comparison results.
+Loads cached scan artifacts, runs the MitigationPipeline with real data,
+and stores before/after comparison results in the session.
 """
 
 from __future__ import annotations
@@ -9,10 +9,14 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+import numpy as np
+import pandas as pd
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from sklearn.model_selection import train_test_split
 
 from faircheck.analysis.recommend import recommend_mitigation
+from faircheck.api.cache import load_cached_artifacts
 
 logger = logging.getLogger(__name__)
 
@@ -23,15 +27,6 @@ class MitigateRequest(BaseModel):
     """Request body for mitigation endpoint."""
     session_id: str
     algorithm: str | None = None  # If None, auto-recommend
-
-
-class MitigateResponse(BaseModel):
-    """Response body for mitigation endpoint."""
-    status: str
-    session_id: str
-    algorithm_applied: str | None = None
-    recommendations: list[dict[str, Any]] = []
-    message: str = ""
 
 
 def _get_db():
@@ -47,7 +42,8 @@ async def mitigate(request: MitigateRequest) -> dict:
     """Apply bias mitigation to a scan session.
 
     If no algorithm is specified, returns auto-recommended algorithms.
-    When an algorithm is specified, applies it and returns before/after metrics.
+    When an algorithm is specified, actually executes the mitigation
+    pipeline and returns before/after metrics comparison.
     """
     SessionLocal, SessionModel = _get_db()
     db = SessionLocal()
@@ -85,8 +81,7 @@ async def mitigate(request: MitigateRequest) -> dict:
                 ),
             }
 
-        # Validate algorithm exists in recommendations
-        valid_algorithms = {r["algorithm"] for r in recommendations}
+        # Validate algorithm
         all_algorithms = {
             "reweighing", "equalized_odds", "calibrated_equalized_odds",
             "disparate_impact_remover", "reject_option_classification",
@@ -111,34 +106,61 @@ async def mitigate(request: MitigateRequest) -> dict:
                 "message": "Mitigation explicitly skipped by user.",
             }
 
-        # Record mitigation in session history
+        # --- Actually execute mitigation ---
+        cached = load_cached_artifacts(request.session_id)
+        if cached is None:
+            # Fallback: record-only mode (no cached data)
+            return _record_only_mitigation(
+                db, row, request, recommendations
+            )
+
+        try:
+            mitigation_result = _execute_mitigation(
+                cached=cached,
+                algorithm=request.algorithm,
+                recommendations=recommendations,
+            )
+        except Exception as e:
+            logger.exception("Mitigation execution failed: %s", e)
+            # Fallback to record-only
+            return _record_only_mitigation(
+                db, row, request, recommendations,
+                error_msg=str(e),
+            )
+
+        # Store mitigation result in session
         mitigation_entry = {
             "algorithm": request.algorithm,
-            "status": "recorded",
+            "status": "executed",
+            "success": mitigation_result.get("success", False),
+            "before_metrics": mitigation_result.get("before_metrics"),
+            "after_metrics": mitigation_result.get("after_metrics"),
+            "improvement_summary": mitigation_result.get("improvement_summary"),
             "recommendation_confidence": next(
                 (r["confidence"] for r in recommendations if r["algorithm"] == request.algorithm),
                 "unknown",
-            ),
-            "recommendation_rationale": next(
-                (r["rationale"] for r in recommendations if r["algorithm"] == request.algorithm),
-                "",
             ),
         }
 
         existing_history = row.mitigation_history or []
         existing_history.append(mitigation_entry)
         row.mitigation_history = existing_history
+
+        # Also store latest mitigation in bias_metrics for report access
+        bias_metrics["mitigation"] = mitigation_entry
+        row.bias_metrics = bias_metrics
+
         db.commit()
 
         return {
-            "status": "applied",
+            "status": "executed",
             "session_id": request.session_id,
             "algorithm_applied": request.algorithm,
-            "mitigation_entry": mitigation_entry,
+            "mitigation_result": mitigation_entry,
             "recommendations": recommendations,
             "message": (
-                f"Mitigation '{request.algorithm}' has been recorded for session "
-                f"'{request.session_id}'."
+                f"Mitigation '{request.algorithm}' executed successfully. "
+                f"See before/after comparison in mitigation_result."
             ),
         }
 
@@ -149,6 +171,209 @@ async def mitigate(request: MitigateRequest) -> dict:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     finally:
         db.close()
+
+
+def _execute_mitigation(
+    cached: dict,
+    algorithm: str,
+    recommendations: list[dict],
+) -> dict[str, Any]:
+    """Load cached data, run mitigation pipeline, return before/after."""
+    from faircheck.config import load_config
+    from faircheck.ingestion.pipeline import IngestionPipeline
+    from faircheck.mitigation.pipeline import MitigationPipeline
+
+    config = load_config()
+
+    # Load model + dataset from cache
+    pipeline = IngestionPipeline()
+    ingestion = pipeline.load(
+        model_path=cached["model_path"],
+        data_path=cached["dataset_path"],
+    )
+
+    # Build full dataframe
+    chunks = list(ingestion.dataset.iter_chunks())
+    df = pd.concat(chunks, ignore_index=True)
+
+    feature_names = cached["feature_names"]
+    protected_cols = cached["protected_cols"]
+    target_col = cached["target_col"]
+
+    X = df[feature_names]
+    y = df[target_col].values
+
+    # Train/test split for mitigation
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.3, random_state=42, stratify=y
+    )
+
+    # Build sensitive features (train, test)
+    sensitive_features = {}
+    for col in protected_cols:
+        if col in df.columns:
+            train_idx = X_train.index
+            test_idx = X_test.index
+            sensitive_features[col] = (
+                df[col].iloc[train_idx].reset_index(drop=True),
+                df[col].iloc[test_idx].reset_index(drop=True),
+            )
+
+    if not sensitive_features:
+        raise ValueError("No protected attributes found in cached data")
+
+    # Get the raw model for mitigation
+    raw_model = (
+        ingestion.model._model
+        if hasattr(ingestion.model, '_model')
+        else ingestion.model
+    )
+
+    # Run mitigation pipeline
+    mit_pipeline = MitigationPipeline(config=config)
+    result = mit_pipeline.run(
+        algorithm=algorithm,
+        X_train=X_train.reset_index(drop=True),
+        y_train=y_train,
+        X_test=X_test.reset_index(drop=True),
+        y_test=y_test,
+        sensitive_features=sensitive_features,
+        estimator=raw_model,
+    )
+
+    # Extract before/after summary
+    before_summary = _extract_metric_summary(result.before_metrics)
+    after_summary = _extract_metric_summary(result.after_metrics) if result.after_metrics else None
+    improvement = _compute_improvement(before_summary, after_summary) if after_summary else None
+
+    return {
+        "success": result.success,
+        "before_metrics": before_summary,
+        "after_metrics": after_summary,
+        "improvement_summary": improvement,
+        "error": getattr(result, "error", None),
+    }
+
+
+def _extract_metric_summary(analysis_dict: dict | None) -> dict[str, Any] | None:
+    """Extract flat metric values from nested analysis results."""
+    if not analysis_dict:
+        return None
+
+    results = analysis_dict.get("results", {})
+    summary: dict[str, Any] = {
+        "overall_risk_level": analysis_dict.get("overall_risk_level", "unknown"),
+        "attributes": {},
+    }
+
+    for attr_name, attr_data in results.items():
+        metrics = attr_data.get("metrics", {})
+        attr_summary: dict[str, Any] = {}
+        for m_name, m_data in metrics.items():
+            attr_summary[m_name] = {
+                "value": m_data.get("value"),
+                "threshold": m_data.get("threshold"),
+                "status": m_data.get("status"),
+            }
+        summary["attributes"][attr_name] = attr_summary
+
+    return summary
+
+
+def _compute_improvement(
+    before: dict[str, Any] | None,
+    after: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Compute improvement summary between before and after metrics."""
+    if not before or not after:
+        return None
+
+    improved = 0
+    degraded = 0
+    unchanged = 0
+    details: list[dict[str, Any]] = []
+
+    before_attrs = before.get("attributes", {})
+    after_attrs = after.get("attributes", {})
+
+    for attr_name in before_attrs:
+        if attr_name not in after_attrs:
+            continue
+        for m_name in before_attrs[attr_name]:
+            if m_name not in after_attrs[attr_name]:
+                continue
+            b_status = before_attrs[attr_name][m_name].get("status", "")
+            a_status = after_attrs[attr_name][m_name].get("status", "")
+            b_val = before_attrs[attr_name][m_name].get("value")
+            a_val = after_attrs[attr_name][m_name].get("value")
+
+            status_rank = {"pass": 0, "warning": 1, "fail": 2}
+            b_rank = status_rank.get(b_status, 1)
+            a_rank = status_rank.get(a_status, 1)
+
+            if a_rank < b_rank:
+                improved += 1
+                change = "improved"
+            elif a_rank > b_rank:
+                degraded += 1
+                change = "degraded"
+            else:
+                unchanged += 1
+                change = "unchanged"
+
+            details.append({
+                "attribute": attr_name,
+                "metric": m_name,
+                "before_value": b_val,
+                "after_value": a_val,
+                "before_status": b_status,
+                "after_status": a_status,
+                "change": change,
+            })
+
+    return {
+        "improved": improved,
+        "degraded": degraded,
+        "unchanged": unchanged,
+        "before_risk": before.get("overall_risk_level", "unknown"),
+        "after_risk": after.get("overall_risk_level", "unknown"),
+        "details": details,
+    }
+
+
+def _record_only_mitigation(db, row, request, recommendations, error_msg=None):
+    """Fallback: record the mitigation choice without executing."""
+    mitigation_entry = {
+        "algorithm": request.algorithm,
+        "status": "recorded",
+        "success": False,
+        "error": error_msg or "Cached data not available for execution",
+        "recommendation_confidence": next(
+            (r["confidence"] for r in recommendations if r["algorithm"] == request.algorithm),
+            "unknown",
+        ),
+        "recommendation_rationale": next(
+            (r["rationale"] for r in recommendations if r["algorithm"] == request.algorithm),
+            "",
+        ),
+    }
+
+    existing_history = row.mitigation_history or []
+    existing_history.append(mitigation_entry)
+    row.mitigation_history = existing_history
+    db.commit()
+
+    return {
+        "status": "recorded",
+        "session_id": request.session_id,
+        "algorithm_applied": request.algorithm,
+        "mitigation_result": mitigation_entry,
+        "recommendations": recommendations,
+        "message": (
+            f"Mitigation '{request.algorithm}' recorded (execution unavailable: "
+            f"{error_msg or 'no cached data'})."
+        ),
+    }
 
 
 @router.post("/recommend")

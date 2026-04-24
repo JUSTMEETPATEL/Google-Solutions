@@ -1,6 +1,7 @@
-"""Report generation endpoint — PDF, Markdown, DOCX.
+"""Report generation endpoint — PDF, HTML, Markdown, DOCX.
 
 Generates compliance-ready audit reports from stored session data.
+Now includes WCAG AA accessible HTML output.
 """
 
 from __future__ import annotations
@@ -9,7 +10,7 @@ import logging
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,7 @@ router = APIRouter(prefix="/reports", tags=["reports"])
 class ReportRequest(BaseModel):
     """Request body for report generation."""
     session_id: str
-    format: str = "pdf"  # pdf | md | docx
+    format: str = "pdf"  # pdf | md | docx | html
     regulation: str | None = "eu_ai_act"
 
 
@@ -32,17 +33,18 @@ def _get_db():
     return SessionLocal, SessionModel
 
 
-@router.post("/")
-async def generate_report(request: ReportRequest) -> FileResponse:
+@router.post("/", response_model=None)
+async def generate_report(request: ReportRequest):
     """Generate a regulation-ready audit report.
 
     Accepts a session ID, format, and optional regulation standard.
-    Returns the generated file as a download.
+    Returns the generated file as a download (or inline HTML for 'html' format).
     """
-    if request.format not in ("pdf", "md", "docx"):
+    valid_formats = ("pdf", "md", "docx", "html")
+    if request.format not in valid_formats:
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported format '{request.format}'. Use 'pdf', 'md', or 'docx'.",
+            detail=f"Unsupported format '{request.format}'. Use one of: {', '.join(valid_formats)}.",
         )
 
     SessionLocal, SessionModel = _get_db()
@@ -71,17 +73,31 @@ async def generate_report(request: ReportRequest) -> FileResponse:
             "model_name": row.model_path or "Unknown Model",
             "model_version": "1.0",
             "analysis_results": analysis_results,
-            "mitigation": (
-                row.mitigation_history[-1] if row.mitigation_history else None
-            ),
+            "mitigation": bias_metrics.get("mitigation"),
+            "mitigation_history": row.mitigation_history or [],
             "oversight": (
-                {"decision": row.oversight_decision} if row.oversight_decision else None
+                bias_metrics.get("oversight") or
+                ({"decision": row.oversight_decision} if row.oversight_decision else None)
             ),
             "regulation_standard": request.regulation or "EU AI Act",
+            "intersectional_analysis": bias_metrics.get("intersectional_analysis"),
+            "confidence_intervals": bias_metrics.get("confidence_intervals"),
+            "feature_attribution": bias_metrics.get("feature_attribution"),
+            "recommendations": bias_metrics.get("recommendations", []),
+            "explanations": bias_metrics.get("explanations", {}),
         }
 
         from faircheck.reports.renderers import ReportBuilder
         builder = ReportBuilder()
+
+        # HTML format returns inline
+        if request.format == "html":
+            html_content = builder.build_html_accessible(
+                data=report_data,
+                regulation=request.regulation,
+            )
+            return HTMLResponse(content=html_content)
+
         results = builder.build(
             data=report_data,
             formats=[request.format],

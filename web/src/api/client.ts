@@ -71,7 +71,7 @@ export async function fetchMitigationRecommendations(sessionId: string): Promise
   return handleResponse(res);
 }
 
-export async function applyMitigation(sessionId: string, algorithm: string): Promise<MitigationResponse> {
+export async function applyMitigation(sessionId: string, algorithm: string): Promise<any> {
   const res = await fetch(`${BASE}/mitigate/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -80,11 +80,11 @@ export async function applyMitigation(sessionId: string, algorithm: string): Pro
   return handleResponse(res);
 }
 
-export async function compareSessions(baselineId: string, currentId: string): Promise<DriftResult> {
-  const res = await fetch(`${BASE}/drift/compare`, {
+export async function compareSessions(baselineId: string, currentId: string): Promise<any> {
+  const res = await fetch(`${BASE}/sessions/compare`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ baseline_session_id: baselineId, current_session_id: currentId }),
+    body: JSON.stringify({ session_a: baselineId, session_b: currentId }),
   });
   return handleResponse(res);
 }

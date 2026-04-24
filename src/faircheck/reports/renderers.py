@@ -75,6 +75,19 @@ class ReportBuilder:
 
         return results
 
+    def build_html_accessible(
+        self,
+        data: dict,
+        regulation: str | None = None,
+    ) -> str:
+        """Generate a WCAG AA accessible HTML report (inline string)."""
+        report_data = ReportData.from_dict(data)
+        if report_data.analysis_results:
+            report_data.chart_images = generate_charts(report_data.analysis_results)
+        # Attach extra fields for richer template
+        report_data._extra = data  # type: ignore[attr-defined]
+        return self.engine.render_accessible_html(report_data, regulation=regulation)
+
     def _render_pdf(
         self, data: ReportData, out_dir: Path, regulation: str | None = None
     ) -> Path:

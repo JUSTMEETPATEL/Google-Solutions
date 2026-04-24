@@ -51,6 +51,17 @@ class ReportEngine:
         template = self.env.get_template(tpl_name)
         return template.render(**ctx)
 
+    def render_accessible_html(
+        self, data: ReportData, regulation: str | None = None, **extra: Any
+    ) -> str:
+        """Render a WCAG AA accessible HTML report."""
+        ctx = self._build_context(data, regulation, extra)
+        # Add extra data if available
+        if hasattr(data, '_extra'):
+            ctx["extra"] = data._extra  # type: ignore[attr-defined]
+        template = self.env.get_template("accessible_report.html.j2")
+        return template.render(**ctx)
+
     def _build_context(
         self, data: ReportData, regulation: str | None, extra: dict
     ) -> dict[str, Any]:

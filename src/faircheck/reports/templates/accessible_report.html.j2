@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FairCheck AI Bias Audit Report — {{ report.model_name }}</title>
+    <style>
+    /* WCAG AA — 4.5:1 contrast ratios, focus indicators, readable sizing */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 16px; line-height: 1.7; color: #1a1a2e; background: #fafbfc; max-width: 960px; margin: 0 auto; padding: 24px; }
+    a { color: #1d4ed8; }
+    a:hover { text-decoration: underline; }
+    h1 { font-size: 28px; color: #0f172a; margin: 32px 0 12px; border-bottom: 3px solid #2563eb; padding-bottom: 8px; }
+    h2 { font-size: 22px; color: #1e293b; margin: 28px 0 10px; }
+    h3 { font-size: 18px; color: #334155; margin: 20px 0 8px; }
+    p, li { margin-bottom: 8px; }
+    .skip-nav { position: absolute; top: -40px; left: 0; background: #2563eb; color: #fff; padding: 8px 16px; z-index: 100; font-weight: 600; border-radius: 0 0 4px 0; }
+    .skip-nav:focus { top: 0; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+    .cover { text-align: center; padding: 48px 0; border-bottom: 2px solid #e2e8f0; margin-bottom: 32px; }
+    .cover h1 { font-size: 36px; border: none; color: #0f172a; }
+    .cover .subtitle { font-size: 18px; color: #475569; margin-top: 8px; }
+    .cover .meta { margin-top: 24px; }
+    .cover .meta p { margin: 4px 0; color: #334155; }
+    .risk-badge { display: inline-block; padding: 8px 20px; border-radius: 6px; font-weight: 700; font-size: 18px; letter-spacing: 1px; }
+    .risk-high { background: #fef2f2; border: 2px solid #dc2626; color: #991b1b; }
+    .risk-medium { background: #fffbeb; border: 2px solid #d97706; color: #92400e; }
+    .risk-low { background: #f0fdf4; border: 2px solid #16a34a; color: #166534; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 15px; }
+    caption { font-weight: 700; font-size: 16px; text-align: left; padding: 8px 0; color: #1e293b; }
+    th { background: #1e40af; color: #ffffff; padding: 10px 12px; text-align: left; font-weight: 600; }
+    td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    .status-pass { color: #166534; font-weight: 700; }
+    .status-warning { color: #92400e; font-weight: 700; }
+    .status-fail { color: #991b1b; font-weight: 700; }
+    .alert-box { padding: 16px 20px; border-radius: 8px; margin: 16px 0; border-left: 5px solid; }
+    .alert-info { background: #eff6ff; border-color: #2563eb; color: #1e40af; }
+    .alert-warn { background: #fffbeb; border-color: #d97706; color: #92400e; }
+    .alert-danger { background: #fef2f2; border-color: #dc2626; color: #991b1b; }
+    .alert-success { background: #f0fdf4; border-color: #16a34a; color: #166534; }
+    .heatmap { display: grid; gap: 4px; margin: 16px 0; }
+    .heatmap-cell { padding: 12px; border-radius: 4px; text-align: center; font-weight: 600; font-size: 13px; }
+    .section { margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid #e2e8f0; }
+    .sign-off { border: 2px solid #1e293b; padding: 24px; border-radius: 8px; margin-top: 32px; }
+    .sign-off .line { border-bottom: 1px solid #94a3b8; margin: 20px 0 4px; padding-bottom: 8px; min-width: 200px; display: inline-block; }
+    .chart-img { max-width: 100%; height: auto; border: 1px solid #e2e8f0; border-radius: 8px; margin: 12px 0; }
+    .timeline { border-left: 3px solid #2563eb; padding-left: 20px; margin: 16px 0; }
+    .timeline-item { margin-bottom: 16px; position: relative; }
+    .timeline-item::before { content: ''; position: absolute; left: -26px; top: 6px; width: 12px; height: 12px; background: #2563eb; border-radius: 50%; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 16px 0; }
+    .stat-card { padding: 16px; border-radius: 8px; background: #f1f5f9; border: 1px solid #e2e8f0; text-align: center; }
+    .stat-card .value { font-size: 28px; font-weight: 800; color: #0f172a; }
+    .stat-card .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-top: 4px; }
+    @media print { body { max-width: 100%; } .skip-nav { display: none; } }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-nav">Skip to main content</a>
+    <nav aria-label="Table of Contents">
+        <details>
+            <summary style="cursor:pointer;font-weight:600;padding:8px 0;">Table of Contents</summary>
+            <ol style="padding-left:20px;margin:8px 0 16px;">
+                <li><a href="#executive-summary">Executive Summary</a></li>
+                <li><a href="#risk-heatmap">Risk Heatmap</a></li>
+                <li><a href="#bias-results">Bias Analysis Results</a></li>
+                <li><a href="#mitigation">Mitigation & Remediation</a></li>
+                <li><a href="#oversight">Human Oversight</a></li>
+                <li><a href="#sign-off">Sign-Off</a></li>
+            </ol>
+        </details>
+    </nav>
+
+    <main id="main-content" role="main">
+    <!-- COVER -->
+    <header class="cover" role="banner">
+        <h1>AI Bias Audit Report</h1>
+        <p class="subtitle">FairCheck — Automated Fairness Analysis</p>
+        <div class="meta">
+            <p><strong>Model:</strong> {{ report.model_name }} (v{{ report.model_version }})</p>
+            <p><strong>Audit Date:</strong> {{ report.audit_date }}</p>
+            {% if report.reviewer %}<p><strong>Reviewer:</strong> {{ report.reviewer }}</p>{% endif %}
+            <p><strong>Regulation:</strong> {{ report.regulation_standard }}</p>
+            {% if report.session_id %}<p><strong>Session:</strong> <code>{{ report.session_id }}</code></p>{% endif %}
+        </div>
+    </header>
+
+    <!-- EXECUTIVE SUMMARY -->
+    <section id="executive-summary" class="section" aria-labelledby="exec-heading">
+        <h1 id="exec-heading">Executive Summary</h1>
+        {% set risk = report.analysis_results.get('overall_risk_level', 'unknown') %}
+        <p>This report presents the results of an automated bias audit on <strong>{{ report.model_name }}</strong>.</p>
+        <p>Overall Risk Level: <span class="risk-badge risk-{{ risk }}" role="status" aria-label="Risk level: {{ risk }}">{{ risk | upper }}</span></p>
+
+        {% set results = report.analysis_results.get('results', {}) %}
+        {% if results %}
+        {% set ns = namespace(p=0, w=0, f=0) %}
+        {% for ad in results.values() %}{% for md in ad.get('metrics', {}).values() %}{% if md.get('status') == 'pass' %}{% set ns.p = ns.p + 1 %}{% elif md.get('status') == 'warning' %}{% set ns.w = ns.w + 1 %}{% elif md.get('status') == 'fail' %}{% set ns.f = ns.f + 1 %}{% endif %}{% endfor %}{% endfor %}
+        <div class="stats-grid" role="group" aria-label="Metric summary statistics">
+            <div class="stat-card"><div class="value" style="color:#166534">{{ ns.p }}</div><div class="label">Passed</div></div>
+            <div class="stat-card"><div class="value" style="color:#92400e">{{ ns.w }}</div><div class="label">Warnings</div></div>
+            <div class="stat-card"><div class="value" style="color:#991b1b">{{ ns.f }}</div><div class="label">Failed</div></div>
+            <div class="stat-card"><div class="value">{{ ns.p + ns.w + ns.f }}</div><div class="label">Total Metrics</div></div>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- RISK HEATMAP -->
+    <section id="risk-heatmap" class="section" aria-labelledby="heatmap-heading">
+        <h1 id="heatmap-heading">Risk Heatmap</h1>
+        <p>Visual overview of metric status across all protected attributes.</p>
+        {% set results = report.analysis_results.get('results', {}) %}
+        {% if results %}
+        <table aria-label="Risk heatmap across attributes and metrics">
+            <caption>Metric status per protected attribute (Pass / Warning / Fail)</caption>
+            {% set all_metric_names = [] %}
+            {% for ad in results.values() %}{% for mn in ad.get('metrics', {}).keys() %}{% if mn not in all_metric_names %}{% if all_metric_names.append(mn) %}{% endif %}{% endif %}{% endfor %}{% endfor %}
+            <thead><tr><th scope="col">Attribute</th>{% for mn in all_metric_names %}<th scope="col">{{ mn | replace('_',' ') | title }}</th>{% endfor %}</tr></thead>
+            <tbody>
+            {% for attr_name, attr_data in results.items() %}
+            <tr>
+                <th scope="row">{{ attr_name | replace('_',' ') | title }}</th>
+                {% for mn in all_metric_names %}
+                {% set md = attr_data.get('metrics', {}).get(mn, {}) %}
+                {% set st = md.get('status', 'skipped') %}
+                <td class="status-{{ st }}" aria-label="{{ st }}">
+                    {% if md.get('value') is not none %}{{ '%.3f' % md.value }}{% else %}—{% endif %}
+                    <span class="sr-only">({{ st }})</span>
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </section>
+
+    <!-- DETAILED BIAS RESULTS -->
+    <section id="bias-results" class="section" aria-labelledby="bias-heading">
+        <h1 id="bias-heading">Bias Analysis Results</h1>
+        {% for attr_name, attr_data in report.analysis_results.get('results', {}).items() %}
+        <h2>Protected Attribute: {{ attr_name | replace('_',' ') | title }}</h2>
+        {% set metrics = attr_data.get('metrics', {}) %}
+        {% if metrics %}
+        <table aria-label="Metrics for {{ attr_name }}">
+            <caption>Fairness metrics for {{ attr_name | replace('_',' ') | title }}</caption>
+            <thead><tr><th scope="col">Metric</th><th scope="col">Threshold</th><th scope="col">Value</th><th scope="col">Status</th></tr></thead>
+            <tbody>
+            {% for m_name, m_data in metrics.items() %}
+            <tr>
+                <td>{{ m_name | replace('_',' ') | title }}</td>
+                <td>{{ m_data.get('threshold', '') }}</td>
+                <td>{{ '%.4f' % m_data.get('value', 0) if m_data.get('value') is not none else 'N/A' }}</td>
+                <td class="status-{{ m_data.get('status','skipped') }}">{{ m_data.get('status','') | upper }}</td>
+            </tr>
+            {% if m_data.get('warning_message') %}
+            <tr><td colspan="4"><div class="alert-box alert-warn" role="alert">⚠ {{ m_data.warning_message }}</div></td></tr>
+            {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        {% endfor %}
+    </section>
+
+    <!-- CHART IMAGES -->
+    {% if report.chart_images %}
+    <section class="section" aria-labelledby="charts-heading">
+        <h1 id="charts-heading">Visualizations</h1>
+        {% for name, b64 in report.chart_images.items() %}
+        <figure>
+            <img src="data:image/png;base64,{{ b64 }}" alt="Chart: {{ name | replace('_',' ') | title }}" class="chart-img">
+            <figcaption>{{ name | replace('_',' ') | title }}</figcaption>
+        </figure>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    <!-- MITIGATION & REMEDIATION TIMELINE -->
+    <section id="mitigation" class="section" aria-labelledby="mit-heading">
+        <h1 id="mit-heading">Mitigation & Remediation</h1>
+        {% if extra and extra.get('mitigation_history') %}
+        <h2>Remediation Timeline</h2>
+        <div class="timeline" role="list" aria-label="Mitigation history">
+            {% for entry in extra.get('mitigation_history', []) %}
+            <div class="timeline-item" role="listitem">
+                <h3>{{ entry.get('algorithm','Unknown') | replace('_',' ') | title }}</h3>
+                <p><strong>Status:</strong> {{ entry.get('status','recorded') | title }}</p>
+                {% if entry.get('improvement_summary') %}
+                {% set imp = entry.improvement_summary %}
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="value" style="color:#166534">{{ imp.improved }}</div><div class="label">Improved</div></div>
+                    <div class="stat-card"><div class="value" style="color:#991b1b">{{ imp.degraded }}</div><div class="label">Degraded</div></div>
+                    <div class="stat-card"><div class="value">{{ imp.unchanged }}</div><div class="label">Unchanged</div></div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% elif report.mitigation %}
+        <p><strong>Algorithm:</strong> {{ report.mitigation.get('algorithm', 'N/A') }}</p>
+        {% else %}
+        <div class="alert-box alert-info" role="note"><strong>No mitigation applied.</strong> Run a mitigation algorithm to see before/after comparison.</div>
+        {% endif %}
+
+        {% if extra and extra.get('recommendations') %}
+        <h2>Recommended Strategies</h2>
+        <table aria-label="Mitigation recommendations">
+            <thead><tr><th scope="col">Priority</th><th scope="col">Algorithm</th><th scope="col">Category</th><th scope="col">Confidence</th><th scope="col">Rationale</th></tr></thead>
+            <tbody>
+            {% for rec in extra.get('recommendations', []) %}
+            {% if rec.get('algorithm') != 'none' %}
+            <tr>
+                <td>{{ rec.get('priority', loop.index) }}</td>
+                <td><strong>{{ rec.algorithm | replace('_',' ') | title }}</strong></td>
+                <td>{{ rec.get('category','') }}</td>
+                <td>{{ rec.get('confidence','') | title }}</td>
+                <td>{{ rec.get('rationale','') }}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </section>
+
+    <!-- HUMAN OVERSIGHT -->
+    <section id="oversight" class="section" aria-labelledby="oversight-heading">
+        <h1 id="oversight-heading">Human Oversight Record</h1>
+        {% if report.oversight %}
+        <table aria-label="Oversight decision details">
+            <tbody>
+                <tr><th scope="row">Reviewer</th><td>{{ report.oversight.get('reviewer', '') }}</td></tr>
+                <tr><th scope="row">Date</th><td>{{ report.oversight.get('date', '') }}</td></tr>
+                <tr><th scope="row">Decision</th><td><strong>{{ report.oversight.get('decision', '') | upper }}</strong></td></tr>
+            </tbody>
+        </table>
+        {% if report.oversight.get('notes') %}<p><strong>Notes:</strong> {{ report.oversight.notes }}</p>{% endif %}
+        {% else %}
+        <div class="alert-box alert-warn" role="alert"><strong>Pending.</strong> A compliance officer must review and record their decision before this report is complete.</div>
+        {% endif %}
+    </section>
+
+    <!-- SIGN-OFF -->
+    <section id="sign-off" aria-labelledby="signoff-heading">
+        <h1 id="signoff-heading">Compliance Sign-Off</h1>
+        <div class="sign-off" role="form" aria-label="Sign-off section">
+            <p>I have reviewed the bias audit results for <strong>{{ report.model_name }}</strong> and confirm the findings documented in this report.</p>
+            <p style="margin-top:24px"><strong>Reviewer Name:</strong> <span class="line">&nbsp;</span></p>
+            <p><strong>Title / Role:</strong> <span class="line">&nbsp;</span></p>
+            <p><strong>Signature:</strong> <span class="line">&nbsp;</span></p>
+            <p><strong>Date:</strong> <span class="line">&nbsp;</span></p>
+        </div>
+    </section>
+
+    <footer style="margin-top:40px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:13px;color:#64748b;" role="contentinfo">
+        <p>Generated by FairCheck v1.0.0 — AI Bias Detection & Fairness Platform</p>
+        <p>Libraries: Fairlearn, AIF360, scikit-learn | Session: {{ report.session_id }}</p>
+    </footer>
+    </main>
+</body>
+</html>
