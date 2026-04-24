@@ -85,6 +85,7 @@ async def generate_report(request: ReportRequest):
             "feature_attribution": bias_metrics.get("feature_attribution"),
             "recommendations": bias_metrics.get("recommendations", []),
             "explanations": bias_metrics.get("explanations", {}),
+            "ai_summary": bias_metrics.get("ai_summary"),
         }
 
         from faircheck.reports.renderers import ReportBuilder
