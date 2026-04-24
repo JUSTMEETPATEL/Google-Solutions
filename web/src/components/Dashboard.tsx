@@ -17,7 +17,7 @@ import { ComparisonPanel } from './ComparisonPanel';
 import { useAppStore } from '../store/appStore';
 import { fetchSession } from '../api/client';
 import {
-  Loader2, AlertCircle, Fingerprint, BookOpen, Users,
+  Loader2, AlertCircle, Fingerprint, Users,
   BarChart2, Layers, Zap, TrendingUp, MessageSquare, GitCompareArrows
 } from 'lucide-react';
 
@@ -140,7 +140,7 @@ export function Dashboard() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <RegulationSelector value={regulation} onChange={setRegulation} />
-            <PDFExport sessionId={selectedSessionId} />
+            <PDFExport sessionId={selectedSessionId} sessionData={session} />
           </div>
         </header>
 

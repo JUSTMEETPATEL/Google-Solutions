@@ -1,8 +1,8 @@
 /** IntersectionalPanel — displays intersectional bias analysis results. */
 
-import { Users, AlertTriangle, TrendingDown } from 'lucide-react';
+import { Users, AlertTriangle } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import type { IntersectionalAnalysis } from '../api/client';
 
@@ -10,7 +10,6 @@ interface IntersectionalPanelProps {
   data: IntersectionalAnalysis;
 }
 
-const COLORS = ['#06b6d4', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#ec4899', '#6366f1', '#14b8a6'];
 const STATUS_COLORS: Record<string, string> = {
   pass: '#22c55e',
   warning: '#eab308',
