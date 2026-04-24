@@ -30,6 +30,11 @@ export async function fetchSession(id: string): Promise<SessionDetail> {
   return handleResponse(res);
 }
 
+export async function deleteSession(id: string): Promise<{ status: string; session_id: string }> {
+  const res = await fetch(`${BASE}/sessions/${id}`, { method: 'DELETE' });
+  return handleResponse(res);
+}
+
 export async function runScan(model: File, dataset: File, config?: Record<string, unknown>): Promise<ScanResult> {
   const fd = new FormData();
   fd.append('model', model);

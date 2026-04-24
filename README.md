@@ -119,7 +119,7 @@ FairCheck is an **end-to-end, local-first** AI bias detection and fairness audit
   - Recommendation table ranked by confidence
   - Compliance sign-off section with signature lines
 - **DOCX Reports** — Via python-docx for editable Word documents.
-- **Client-Side PDF Export** — One-click download from the web dashboard via jsPDF.
+- **Client-Side PDF Export** — One-click download from the web dashboard via `jsPDF` and `html2canvas`, capturing the exact bento-grid layout in high fidelity.
 - **Metric Visualizations** — Matplotlib charts embedded in server-generated reports.
 - **4 Output Formats** — PDF, HTML, Markdown, DOCX — all from one API endpoint.
 
@@ -129,7 +129,7 @@ FairCheck is an **end-to-end, local-first** AI bias detection and fairness audit
 - **Interactive Charts** — Recharts-powered visualizations for all fairness metrics.
 - **Drag-and-Drop Upload** — Upload `.pkl`, `.joblib`, or `.onnx` models alongside CSV/Parquet/JSON datasets.
 - **Toast Notifications** — Real-time feedback for all actions (mitigation applied, oversight recorded, report exported).
-- **Auto-Refresh Sidebar** — Session list updates automatically after new scans complete.
+- **Auto-Refresh Sidebar** — Persistent session history with full management (start new audits, delete past sessions).
 - **Bento Dashboard Panels:**
   - 📊 Bias metric charts with pass/warning/fail indicators
   - 🎯 Risk score card with overall risk level
@@ -565,7 +565,7 @@ uv run pytest tests/ -v --cov=faircheck
 | State | Zustand | 5+ | Lightweight global state |
 | Data Fetching | TanStack Query | 5+ | Caching & background refresh |
 | File Upload | react-dropzone | 15+ | Drag-and-drop interface |
-| PDF Export | jsPDF + jspdf-autotable | latest | Client-side PDF generation |
+| PDF Export | jsPDF + html2canvas | latest | High-fidelity client-side PDF generation |
 | Icons | Lucide React | latest | Consistent iconography |
 
 ### TUI Layer *(Planned)*
@@ -587,7 +587,7 @@ uv run pytest tests/ -v --cov=faircheck
 | **M3** | Mitigation pipeline (6 algorithms) | ✅ Done |
 | **M4** | Report generation (PDF/DOCX, EU AI Act mapping) | ✅ Done |
 | **M5** | Web dashboard, advanced analysis, drift monitoring | ✅ Done |
-| **M5.5** | Live mitigation execution, model comparison, WCAG HTML reports, smart guidance, toast system | ✅ Done |
+| **M5.5** | Live mitigation execution, model comparison, WCAG HTML reports, smart guidance, persistent session management, image-based PDF reports | ✅ Done |
 | **M6** | TUI interface, Docker support, CI/CD integration | 🔲 Planned |
 
 ---

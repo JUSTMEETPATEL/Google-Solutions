@@ -151,12 +151,26 @@ class MitigationPipeline:
             y_pred_after = result["model"].predict(np.asarray(X_test))
         elif "sample_weight" in result:
             # Re-train with weights and predict
-            from sklearn.linear_model import LogisticRegression
-            retrained = LogisticRegression(max_iter=1000, solver="lbfgs")
-            retrained.fit(
-                np.asarray(X_train), np.asarray(y_train),
-                sample_weight=result["sample_weight"],
-            )
+            from sklearn.base import clone
+            if estimator is not None and hasattr(estimator, "fit"):
+                try:
+                    retrained = clone(estimator)
+                except Exception:
+                    from sklearn.linear_model import LogisticRegression
+                    retrained = LogisticRegression(max_iter=1000, solver="lbfgs")
+            else:
+                from sklearn.linear_model import LogisticRegression
+                retrained = LogisticRegression(max_iter=1000, solver="lbfgs")
+                
+            try:
+                retrained.fit(
+                    np.asarray(X_train), np.asarray(y_train),
+                    sample_weight=result["sample_weight"],
+                )
+            except TypeError:
+                # Fallback if the estimator doesn't support sample_weight
+                retrained.fit(np.asarray(X_train), np.asarray(y_train))
+                
             y_pred_after = retrained.predict(np.asarray(X_test))
         else:
             y_pred_after = y_pred_before  # Fallback

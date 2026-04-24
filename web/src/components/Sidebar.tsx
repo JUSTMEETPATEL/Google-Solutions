@@ -1,7 +1,8 @@
 /** Sidebar — session history list (WEB-01). */
 
 import { useAppStore } from '../store/appStore';
-import { ShieldCheck, History, Activity, Database } from 'lucide-react';
+import { ShieldCheck, History, Activity, Database, Trash2, Plus } from 'lucide-react';
+import { deleteSession } from '../api/client';
 
 const RISK_COLORS: Record<string, string> = {
   high: 'text-danger-500 border-danger-500/20 bg-danger-500/5',
@@ -10,7 +11,21 @@ const RISK_COLORS: Record<string, string> = {
 };
 
 export function Sidebar() {
-  const { sessions, selectedSessionId, setSelectedSession } = useAppStore();
+  const { sessions, selectedSessionId, setSelectedSession, setSessions } = useAppStore();
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this audit log?')) return;
+    try {
+      await deleteSession(id);
+      setSessions(sessions.filter(s => s.id !== id));
+      if (selectedSessionId === id) {
+        setSelectedSession(null);
+      }
+    } catch (error) {
+      console.error('Failed to delete session', error);
+    }
+  };
 
   return (
     <aside className="w-[260px] min-h-screen flex flex-col shrink-0 border-r border-white/5 bg-dark-950/80 backdrop-blur-3xl relative z-10 shadow-[4px_0_24px_-4px_rgba(0,0,0,0.5)]">
@@ -26,11 +41,20 @@ export function Sidebar() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-1 mt-2">
-        <div className="px-3 mb-2 flex items-center gap-2">
-          <History className="w-3.5 h-3.5 text-dark-500" />
-          <h3 className="text-[10px] font-bold text-dark-500 uppercase tracking-widest">
-            Audit Log
-          </h3>
+        <div className="px-3 mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <History className="w-3.5 h-3.5 text-dark-500" />
+            <h3 className="text-[10px] font-bold text-dark-500 uppercase tracking-widest">
+              Audit Log
+            </h3>
+          </div>
+          <button
+            onClick={() => setSelectedSession(null)}
+            className="p-1 hover:bg-white/10 rounded transition-colors text-dark-400 hover:text-white"
+            title="New Audit"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
         </div>
 
         {sessions.length === 0 && (
@@ -58,6 +82,13 @@ export function Sidebar() {
                 <div className={`text-sm font-semibold truncate transition-colors ${isSelected ? 'text-primary-100' : 'text-dark-200 group-hover:text-white'}`}>
                   {s.model_name || 'Unknown Model'}
                 </div>
+                <button
+                  onClick={(e) => handleDelete(e, s.id)}
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-danger-500/20 text-dark-400 hover:text-danger-500 rounded transition-all shrink-0 ml-2"
+                  title="Delete Session"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-1.5 text-[10px] text-dark-400 font-mono">

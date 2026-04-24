@@ -161,10 +161,13 @@ export function MitigationPanel({ sessionId, recommendations, mitigationHistory 
                       <MiniStat label="Unchanged" value={result.improvement_summary.unchanged} color="text-zinc-400" />
                     </div>
                     {result.improvement_summary.details && (
-                      <div className="space-y-1">
-                        {result.improvement_summary.details.slice(0, 6).map((d: any, i: number) => (
-                          <div key={i} className="flex items-center justify-between text-[11px] px-2 py-1 rounded bg-dark-900/50">
-                            <span className="text-zinc-300">{d.metric?.replace(/_/g, ' ')}</span>
+                      <div className="space-y-1 max-h-64 overflow-y-auto pr-1">
+                        {result.improvement_summary.details.map((d: any, i: number) => (
+                          <div key={i} className="flex items-center justify-between text-[11px] px-2 py-1.5 rounded bg-dark-900/50">
+                            <div className="flex items-center gap-2">
+                              <span className="text-zinc-500 font-mono bg-zinc-800/50 px-1.5 py-0.5 rounded">{d.attribute}</span>
+                              <span className="text-zinc-300">{d.metric?.replace(/_/g, ' ')}</span>
+                            </div>
                             <div className="flex items-center gap-2">
                               <span className="font-mono text-zinc-500">{d.before_value?.toFixed(3) ?? '—'}</span>
                               <span className="text-zinc-600">→</span>
